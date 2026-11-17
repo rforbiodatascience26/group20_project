@@ -9,8 +9,6 @@ editor: visual
 ```{r}
 library(tidyverse)
 
-sample_meta <- read_tsv("data/RNA_sample_metadata.txt.gz")
-counts_df   <- read_tsv("data/RNA_count_matrix.txt.gz")
-
-
+sample_meta <- read_tsv("data/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
+counts_df   <- read_tsv("data/RNA_count_matrix.txt.gz", show_col_types = FALSE)
 ```
