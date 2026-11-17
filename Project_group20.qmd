@@ -10,5 +10,10 @@ editor: visual
 library(tidyverse)
 
 sample_meta <- read_tsv("data/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
-counts_df   <- read_tsv("data/RNA_count_matrix.txt.gz", show_col_types = FALSE)
+counts_df <- read.delim("data/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+  as_tibble(rownames = "gene_id")
+```
+
+```{r}
+
 ```
