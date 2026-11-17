@@ -1,0 +1,16 @@
+---
+title: "Project_group20"
+format: html
+editor: visual
+---
+
+## Analysis of the GSE161731 dataset
+
+```{r}
+library(tidyverse)
+
+sample_meta <- read_tsv("data/RNA_sample_metadata.txt.gz")
+counts_df   <- read_tsv("data/RNA_count_matrix.txt.gz")
+
+
+```
