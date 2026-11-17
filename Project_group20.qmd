@@ -14,3 +14,13 @@ counts_df   <- read_tsv("data/RNA_count_matrix.txt.gz")
 
 
 ```
+
+## Clean Data
+
+#### Sample data
+
+```{r}
+clean_sample_meta <- sample_meta |>
+  select(-c("ips_received","ips_started","passage_received","media","passage_diff","diff_start","salmonella_date","atac_date","flow_date","medium_changes","terminated","open_access","ips_culture_days","passage_diff_bins","rna_extraction","rna_submit","library_pool","chemistry","rna_auto","status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days"))
+
+```
