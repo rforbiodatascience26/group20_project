@@ -14,8 +14,37 @@ counts_df <- read.delim("data/RNA_count_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
 ```
 
-```{r}
+## Data Description
 
+Before filtering or transforming the dataset, we inspect the dimensions, missing values, and distributions of both the sample metadata and the raw gene count matrix.
+
+### Metadata Details
+
+```{r}
+dim(sample_meta)
+names(sample_meta)
+```
+
+```{r}
+n_distinct(sample_meta$donor)
+# number o f unique samples per condition and their purity
+count(sample_meta, condition_name, purity_bins)
+```
+
+```{r}
+#count NAs
+na_summary <- colSums(is.na(sample_meta)) |>
+  enframe(name = "column", value = "n_na") |>
+  filter(n_na > 0)
+
+na_summary
+```
+
+### Count Data Details
+
+```{r}
+dim(counts_df)
+sum(is.na(counts_df))
 ```
 
 ## Clean Data
@@ -26,4 +55,75 @@ counts_df <- read.delim("data/RNA_count_matrix.txt.gz", check.names = FALSE) |>
 clean_sample_meta <- sample_meta |>
   select(-c("ips_received","ips_started","passage_received","media","passage_diff","diff_start","salmonella_date","atac_date","flow_date","medium_changes","terminated","open_access","ips_culture_days","passage_diff_bins","rna_extraction","rna_submit","library_pool","chemistry","rna_auto","status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days","EB_formation","macrophage_harvest","clone"))
 
+```
+
+```{r}
+library("table1")
+
+clean_sample_meta |>
+  mutate(
+    condition_name    = factor(condition_name),
+    sex               = factor(sex),
+    received_as       = factor(received_as),
+    rna_concentration = factor(rna_concentration)
+  ) |>
+  table1(
+    x = formula(~ sex + received_as + rna_concentration + mean_purity | condition_name),
+    data = _
+  )
+```
+
+remove the alive/frozen maybe
+
+```{r}
+counts_long <- counts_df |>
+  # counts with at least 10 counts in at least 5 samples
+  filter(rowSums(counts_df[-1] >= 10) >= 5) |> 
+  pivot_longer(
+    cols      = -gene_id,
+    names_to  = "sample_id",
+    values_to = "counts"
+  )
+
+counts_long 
+```
+
+remove all lines that have NAs and then inner join
+
+```{r}
+clean_sample_meta |>
+  filter(if_any(everything(), is.na))
+
+clean_sample_meta <- clean_sample_meta |>
+  drop_na()
+```
+
+```{r}
+merged_data <- counts_long |>
+  inner_join(clean_sample_meta, by = "sample_id")
+
+merged_data |>
+  distinct(sample_id, replicate) |>
+  count(replicate)
+
+merged_data
+```
+
+```{r}
+gene_summary <- merged_data |>
+  group_by(gene_id, condition_name) |>
+  summarise(
+    mean_counts = mean(counts),
+    sd_counts   = sd(counts),
+    .groups     = "drop"
+  ) |>
+  drop_na()
+
+head(gene_summary)
+```
+
+```{r}
+dim(gene_summary)
+
+n_distinct(gene_summary$gene_id)
 ```
