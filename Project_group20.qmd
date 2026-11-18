@@ -4,7 +4,7 @@ format: html
 editor: visual
 ---
 
-# Analysis of the GSE161731 dataset
+# Final Project, group 20
 
 ## Load Data
 
@@ -108,8 +108,15 @@ Selection of the relevant columns for analysis.
 
 ```{r}
 clean_sample_meta <- sample_meta |>
-  select(-c("ips_received","ips_started","passage_received","media","passage_diff","diff_start","salmonella_date","atac_date","flow_date","medium_changes","terminated","open_access","ips_culture_days","passage_diff_bins","rna_extraction","rna_submit","library_pool","chemistry","rna_auto","status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days","EB_formation","macrophage_harvest","clone","line_id"))
+  select(-c(
+    "ips_received","ips_started","passage_received","media","passage_diff",
+    "diff_start","salmonella_date","atac_date","flow_date","medium_changes",
+    "terminated","open_access","ips_culture_days","passage_diff_bins",
+    "rna_extraction","rna_submit","library_pool","chemistry","rna_auto",
+    "status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days",
+    "EB_formation","macrophage_harvest","clone","line_id"
 
+  ))
 clean_sample_meta |>
   slice_sample(n = 10)
 
@@ -163,8 +170,10 @@ There are a couple of columns, with a odd name, specifically "SL1344", which ref
 
 ```{r}
 clean_sample_meta <- clean_sample_meta |>
-  rename( SL1344_infection = SL1344,
-    IFNg_status = IFNg)
+  rename( 
+    SL1344_infection = SL1344,
+    IFNg_status = IFNg
+)
 ```
 
 #### Describing a cohort
