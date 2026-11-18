@@ -9,10 +9,8 @@ editor: visual
 ```{r}
 library(tidyverse)
 
-sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz")
-counts_df   <- read_tsv("data/_raw/RNA_count_matrix.txt.gz")
-sample_meta <- read_tsv("data/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
-counts_df <- read.delim("data/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
+counts_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
 ```
 
@@ -20,62 +18,26 @@ counts_df <- read.delim("data/RNA_count_matrix.txt.gz", check.names = FALSE) |>
 
 Before filtering or transforming the dataset, we inspect the dimensions, missing values, and distributions of both the sample metadata and the raw gene count matrix.
 
-### Metadata Details
+### Sample Metadata Details
 
-```{r}
-dim(sample_meta)
-names(sample_meta)
-```
-
-```{r}
-n_distinct(sample_meta$donor)
-# number o f unique samples per condition and their purity
-count(sample_meta, condition_name, purity_bins)
-```
-
-```{r}
-#count NAs
-na_summary <- colSums(is.na(sample_meta)) |>
-  enframe(name = "column", value = "n_na") |>
-  filter(n_na > 0)
-
-na_summary
-```
-
-### Count Data Details
-
-```{r}
-dim(counts_df)
-sum(is.na(counts_df))
-```
-
-## Clean Data
-
-### Sample metadata
+Overview of a portion of the Sample Metadata we will be working with.
 
 ```{r}
 sample_meta |>
   slice_sample(n = 10)
 ```
 
-#### Selection of columns
+#### 1. Dimensions of the data
 
-Selection of the relevant columns for analysis.
+Firstly, we observe the dimensions of the sample data.
 
 ```{r}
-clean_sample_meta <- sample_meta |>
-  select(-c("ips_received","ips_started","passage_received","media","passage_diff","diff_start","salmonella_date","atac_date","flow_date","medium_changes","terminated","open_access","ips_culture_days","passage_diff_bins","rna_extraction","rna_submit","library_pool","chemistry","rna_auto","status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days","EB_formation","macrophage_harvest","clone"))
-
-clean_sample_meta |>
-  slice_sample(n = 10)
-
+dim(sample_meta)
 ```
 
-#### Quality Assessment 
+#### 2. Duplicates
 
-1.  Duplicates
-
-Investigate whether there are replicates of the same sample. From the way that
+Investigate whether there are replicates of the same sample.
 
 ```{r}
 sample_meta |>
@@ -83,16 +45,79 @@ sample_meta |>
   filter(n > 1)
 ```
 
-2.  Missing Values (NAs)
+#### 3. Missing Values (NA)
 
 Checking if there are NAs in this metadata.
+
+```{r}
+#count NAs
+na_summary_samplemeta <- colSums(is.na(sample_meta)) |>
+  enframe(name = "column name", value = "is_na") |>
+  filter(is_na > 0)
+
+na_summary
+```
+
+### Count Data Details
+
+Overview of a portion of the counts data we will be working with.
+
+```{r}
+counts_df |>
+  slice_sample(n = 10)
+```
+
+#### 1. Dimensions
+
+```{r}
+dim(counts_df)
+sum(is.na(counts_df))
+```
+
+#### 2. Duplicates
+
+Checking the columns to see if there is any sample_id that has replicates
+
+```{r}
+# cheking if there are any names of columns that have duplicates
+anyDuplicated(names(counts_df))
+```
+
+#### 3. Missing Values (NA)
+
+Investigating if there is any sample that doesn't have data for 1 or more genes.
+
+```{r}
+sum(is.na(counts_df))
+```
+
+## Clean Data
+
+### Sample metadata
+
+#### Selection of columns
+
+Selection of the relevant columns for analysis.
+
+```{r}
+clean_sample_meta <- sample_meta |>
+  select(-c("ips_received","ips_started","passage_received","media","passage_diff","diff_start","salmonella_date","atac_date","flow_date","medium_changes","terminated","open_access","ips_culture_days","passage_diff_bins","rna_extraction","rna_submit","library_pool","chemistry","rna_auto","status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days","EB_formation","macrophage_harvest","clone","line_id"))
+
+clean_sample_meta |>
+  slice_sample(n = 10)
+
+```
+
+#### Dealing with NAs
+
+First, a check is made to see which columns have NAs, after the previous selection
 
 ```{r}
 clean_sample_meta |>
   summarise(across(everything(), ~ sum(is.na(.))))
 ```
 
-All missing values were identified in columns related to sample purity. Before deciding how to handle these missing values, we investigated whether their occurrence followed any pattern.For example, if missing values were associated with specific donors, experimental conditions or other sample characteristics.
+All missing values were identified in columns related to sample purity. Before deciding how to handle these missing values, we investigated whether their occurrence followed any pattern. For example, if missing values were associated with specific donors, experimental conditions or other sample characteristics.
 
 ```{r}
 clean_sample_meta |> 
@@ -110,6 +135,21 @@ clean_sample_meta |>
   filter(if_all(contains("purity"), is.na))
 ```
 
+**///////DECIDE WHAT TO DO WITH THE REST OF NAs : put them in zero, have them, be the same value as the other columns, or maybe the columns "max_purity_filtered" and "mean_purity_filtered" , the ones that are NAs across all donors that have NAs in their samples, these columns maybe are not relevant and we can remove them//////**
+
+```{r}
+clean_sample_meta <- clean_sample_meta|>
+  filter(!if_all(contains("purity"), is.na))
+```
+
+```{r}
+#clean_sample_meta |>
+  #filter(if_any(everything(), is.na))
+
+#clean_sample_meta <- clean_sample_meta |>
+  #drop_na()
+```
+
 #### Fixing columns naming
 
 There are a couple of columns, with a odd name, specifically "SL1344", which refers to if it is a sample control or if the sample was infected with *Salmonella*; and also "IFNg", which refers if the sample was exposed to IFNγ (primed) or not (naive). Thus, the group decided to change this names for better understanding and consistency reasons.
@@ -120,6 +160,10 @@ clean_sample_meta <- clean_sample_meta |>
     IFNg_status = IFNg)
 ```
 
+#### Describing a cohort
+
+///////Maybe take out the mean purity, all the values are the same//////
+
 ```{r}
 library("table1")
 
@@ -127,8 +171,8 @@ clean_sample_meta |>
   mutate(
     condition_name    = factor(condition_name),
     sex               = factor(sex),
-    received_as       = factor(received_as),
-    rna_concentration = factor(rna_concentration)
+    rna_concentration = factor(rna_concentration),
+    received_as       = factor(received_as)
   ) |>
   table1(
     x = formula(~ sex + received_as + rna_concentration + mean_purity | condition_name),
@@ -136,7 +180,26 @@ clean_sample_meta |>
   )
 ```
 
-remove the alive/frozen maybe
+From this cohort, we can observe one more inconsistency, only one variable across all conditions has the column "received_as" with a value of "alive/frozen". Logically, this sample characteristic should belong to a sample from the same donor. Thus, an investigation for this hipothesis was conducted.
+
+```{r}
+clean_sample_meta |> 
+  filter(received_as == "alive/frozen")
+
+```
+
+As we can see from the output, the samples from only one donor was received as alive/frozen. For consistency purposes, we decide to also remove the data from this donor.
+
+```{r}
+clean_sample_meta <- clean_sample_meta |>
+ filter(!received_as == "alive/frozen")
+```
+
+### Counts data
+
+For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained. Subsequently, the dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualisation.
+
+//////should we do more than 5 samples tho? we have 336 samples, 5 seems very little//////
 
 ```{r}
 counts_long <- counts_df |>
@@ -151,15 +214,9 @@ counts_long <- counts_df |>
 counts_long 
 ```
 
-remove all lines that have NAs and then inner join
+### Creating one data set from two data sets
 
-```{r}
-clean_sample_meta |>
-  filter(if_any(everything(), is.na))
-
-clean_sample_meta <- clean_sample_meta |>
-  drop_na()
-```
+///// Text (bla bla bla) //////
 
 ```{r}
 merged_data <- counts_long |>
