@@ -196,7 +196,7 @@ clean_sample_meta |>
   )
 ```
 
-From this cohort, we can observe one more inconsistency, only one variable across all conditions has the column "received_as" with a value of "alive/frozen". Logically, this sample characteristic should belong to a sample from the same donor. Thus, an investigation for this hipothesis was conducted.
+From this cohort, we can observe one more inconsistency, only one variable across all conditions has the column "received_as" with a value of "alive/frozen". Logically, this sample characteristic should belong to a sample from the same donor. Thus, an investigation for this hypothesis was conducted.
 
 ```{r}
 clean_sample_meta |> 
@@ -257,7 +257,7 @@ counts_long
 
 ### Creating one data set from two data sets
 
-///// Text (bla bla bla) //////
+After cleaning and restructuring the count data and sample metadata separately, the two datasets were merged using the `sample_id` column as a common identifier. An inner join was used to retain only the samples present in both datasets, ensuring that each gene count was associated with its corresponding sample information. The number of replicates per sample was then checked to verify that the metadata had been correctly assigned.
 
 ```{r}
 merged_data <- counts_long |>
@@ -269,6 +269,20 @@ merged_data |>
 
 merged_data
 ```
+
+To facilitate the analysis of gene expression at the individual gene level, the merged_data was grouped by `gene_id` and converted into a nested structure using `nest()`. This creates one row per gene, with all corresponding observations, regarding sample_id, counts and information about the donor, stored in a nested tibble.
+
+```{r}
+merged_data_nested <- merged_data |>
+  select(c("gene_id","sample_id","counts","condition_name","condition","sex")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+merged_data_nested
+```
+
+To obtain an overview of gene expression across the different experimental conditions, descriptive statistics were calculated for each gene within each condition. The data were grouped by `gene_id` and `condition_name`, and the mean and standard deviation of the read counts were calculated. This provides an overview of the average expression levels and variability between samples for each gene and condition. Finally, missing values were removed to ensure that the resulting summary dataset contains valid statistical measurements.
 
 ```{r}
 gene_summary <- merged_data |>
