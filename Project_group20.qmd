@@ -114,7 +114,7 @@ clean_sample_meta <- sample_meta |>
     "terminated","open_access","ips_culture_days","passage_diff_bins",
     "rna_extraction","rna_submit","library_pool","chemistry","rna_auto",
     "status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days",
-    "EB_formation","macrophage_harvest","clone","line_id"
+    "EB_formation","macrophage_harvest","clone","line_id","genotype_id"
 
   ))
 clean_sample_meta |>
@@ -211,26 +211,41 @@ clean_sample_meta <- clean_sample_meta |>
  filter(!received_as == "alive/frozen")
 ```
 
-///Last step////
-
 Finally, we can export the cleaned sample metadata
 
 ```{r}
 write_tsv(x = clean_sample_meta, file = "data/02_sample_meta_clean.tsv")
 ```
 
-## Augment Data
-
 ### Counts data
 
-For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained. Subsequently, the dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualization.
+#### Filter data
+
+For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained.
 
 //////should we do more than 5 samples tho? we have 336 samples, 5 seems very little//////
 
 ```{r}
-counts_long <- counts_df |>
+clean_counts_df <- counts_df |>
   # counts with at least 10 counts in at least 5 samples
-  filter(rowSums(counts_df[-1] >= 10) >= 5) |> 
+  filter(rowSums(counts_df[-1] >= 10) >= 5)
+
+```
+
+Export the cleaned counts data
+
+```{r}
+write_tsv(x = clean_counts_df, file = "data/02_counts_data_clean.tsv")
+```
+
+## Augment Data
+
+### Counts data
+
+The dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualization.
+
+```{r}
+counts_long <- clean_counts_df |>
   pivot_longer(
     cols      = -gene_id,
     names_to  = "sample_id",
