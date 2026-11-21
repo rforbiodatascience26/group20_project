@@ -4,6 +4,16 @@ format: html
 editor: visual
 ---
 
+# Project for R Bio Data Science
+
+## Introduction
+
+In this project we will work with RNA-seq gene expression data from human macrophages, published by Alasoo et al. 2018 in Nature Genetics.
+
+The macrophages were not taken directly from patients. Instead, induced stem cells from 84 healthy, unrelated donors in the HipSci collection, were differentiated into macrophages in the lab. Each donor's cells were exposed to four conditions: naive (untreated), IFNg (interferon-gamma for 18 hours), SL1344 (*Salmonella* infection for 5 hours) and IFNg_SL1344 (both treatments). Each donor contributes exactly one sample per condition and the dataset contains 336 samples in total.
+
+The data consist of a count matrix with raw read counts for 35,033 genes across these samples and a metadata file that describes each sample, for example its donor, sex, condition and sequencing batch.
+
 ## Analysis of the GSE161731 dataset
 
 ```{r}
