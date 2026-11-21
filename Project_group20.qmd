@@ -19,11 +19,295 @@ The data consist of a count matrix with raw read counts for 35,033 genes across 
 ```{r}
 library(tidyverse)
 
-sample_meta <- read_tsv("data/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
-counts_df <- read.delim("data/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+# sample meta data
+sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
+write_tsv(x = sample_meta, file = "data/01_sample_meta_load.tsv")
+
+# counts data
+counts_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
+write_tsv(x = counts_df, file = "data/01_counts_df_load.tsv")
+```
+
+## Data Description
+
+Before filtering or transforming the dataset, we inspect the dimensions, missing values, and distributions of both the sample metadata and the raw gene count matrix.
+
+### Sample Metadata Details
+
+Overview of a portion of the Sample Metadata we will be working with.
+
+```{r}
+sample_meta |>
+  slice_sample(n = 10)
+```
+
+#### 1. Dimensions of the data
+
+Firstly, we observe the dimensions of the sample data.
+
+```{r}
+dim(sample_meta)
+```
+
+#### 2. Duplicates
+
+Investigate whether there are replicates of the same sample.
+
+```{r}
+sample_meta |>
+  count(sample_id) |>
+  filter(n > 1)
+```
+
+#### 3. Missing Values (NA)
+
+Checking if there are NAs in this metadata.
+
+```{r}
+#count NAs
+na_summary_samplemeta <- colSums(is.na(sample_meta)) |>
+  enframe(name = "column name", value = "is_na") |>
+  filter(is_na > 0)
+
+na_summary
+```
+
+### Count Data Details
+
+Overview of a portion of the counts data we will be working with.
+
+```{r}
+counts_df |>
+  slice_sample(n = 10)
+```
+
+#### 1. Dimensions
+
+```{r}
+dim(counts_df)
+sum(is.na(counts_df))
+```
+
+#### 2. Duplicates
+
+Checking the columns to see if there is any sample_id that has replicates
+
+```{r}
+# cheking if there are any names of columns that have duplicates
+anyDuplicated(names(counts_df))
+```
+
+#### 3. Missing Values (NA)
+
+Investigating if there is any sample that doesn't have data for 1 or more genes.
+
+```{r}
+sum(is.na(counts_df))
+```
+
+## Clean Data
+
+### Sample metadata
+
+#### Selection of columns
+
+Selection of the relevant columns for analysis.
+
+```{r}
+clean_sample_meta <- sample_meta |>
+  select(-c(
+    "ips_received","ips_started","passage_received","media","passage_diff",
+    "diff_start","salmonella_date","atac_date","flow_date","medium_changes",
+    "terminated","open_access","ips_culture_days","passage_diff_bins",
+    "rna_extraction","rna_submit","library_pool","chemistry","rna_auto",
+    "status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days",
+    "EB_formation","macrophage_harvest","clone","line_id","genotype_id"
+
+  ))
+clean_sample_meta |>
+  slice_sample(n = 10)
+
+```
+
+#### Dealing with NAs
+
+First, a check is made to see which columns have NAs, after the previous selection
+
+```{r}
+clean_sample_meta |>
+  summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+All missing values were identified in columns related to sample purity. Before deciding how to handle these missing values, we investigated whether their occurrence followed any pattern. For example, if missing values were associated with specific donors, experimental conditions or other sample characteristics.
+
+```{r}
+clean_sample_meta |> 
+  filter(if_any(contains("purity"), is.na))
+```
+
+As we can see, there is a pattern: the NAs seemed to be grouped by the donor. However, there is some inconsistency, there are some donors, that have data in some purity columns, while others seem to have no data at all in every purity column. From this information, the decision was taken to only delete the rows related to the donors that have no data about the purity of their samples. This way, we make sure that further analysis is made on reliable data.
+
+But first, we need to filter the donors that follow this characteristic, and then remove them.
+
+```{r}
+clean_sample_meta |> 
+  group_by(donor) |> 
+  select("donor",contains("purity")) |>
+  filter(if_all(contains("purity"), is.na))
+```
+
+**///////DECIDE WHAT TO DO WITH THE REST OF NAs : put them in zero, have them, be the same value as the other columns, or maybe the columns "max_purity_filtered" and "mean_purity_filtered" , the ones that are NAs across all donors that have NAs in their samples, these columns maybe are not relevant and we can remove them//////**
+
+```{r}
+clean_sample_meta <- clean_sample_meta|>
+  filter(!if_all(contains("purity"), is.na))
 ```
 
 ```{r}
+#clean_sample_meta |>
+  #filter(if_any(everything(), is.na))
 
+#clean_sample_meta <- clean_sample_meta |>
+  #drop_na()
+```
+
+#### Fixing columns naming
+
+There are a couple of columns, with a odd name, specifically "SL1344", which refers to if it is a sample control or if the sample was infected with *Salmonella*; and also "IFNg", which refers if the sample was exposed to IFNγ (primed) or not (naive). Thus, the group decided to change this names for better understanding and consistency reasons.
+
+```{r}
+clean_sample_meta <- clean_sample_meta |>
+  rename( 
+    SL1344_infection = SL1344,
+    IFNg_status = IFNg
+)
+```
+
+#### Describing a cohort
+
+///////Maybe take out the mean purity, all the values are the same//////
+
+```{r}
+library("table1")
+
+clean_sample_meta |>
+  mutate(
+    condition_name    = factor(condition_name),
+    sex               = factor(sex),
+    rna_concentration = factor(rna_concentration),
+    received_as       = factor(received_as)
+  ) |>
+  table1(
+    x = formula(~ sex + received_as + rna_concentration + mean_purity | condition_name),
+    data = _
+  )
+```
+
+From this cohort, we can observe one more inconsistency, only one variable across all conditions has the column "received_as" with a value of "alive/frozen". Logically, this sample characteristic should belong to a sample from the same donor. Thus, an investigation for this hypothesis was conducted.
+
+```{r}
+clean_sample_meta |> 
+  filter(received_as == "alive/frozen")
+
+```
+
+As we can see from the output, the samples from only one donor was received as alive/frozen. For consistency purposes, we decide to also remove the data from this donor.
+
+```{r}
+clean_sample_meta <- clean_sample_meta |>
+ filter(!received_as == "alive/frozen")
+```
+
+Finally, we can export the cleaned sample metadata
+
+```{r}
+write_tsv(x = clean_sample_meta, file = "data/02_sample_meta_clean.tsv")
+```
+
+### Counts data
+
+#### Filter data
+
+For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained.
+
+//////should we do more than 5 samples tho? we have 336 samples, 5 seems very little//////
+
+```{r}
+clean_counts_df <- counts_df |>
+  # counts with at least 10 counts in at least 5 samples
+  filter(rowSums(across(-1) >= 10) >= 84)
+
+```
+
+Export the cleaned counts data
+
+```{r}
+write_tsv(x = clean_counts_df, file = "data/02_counts_data_clean.tsv")
+```
+
+## Augment Data
+
+### Counts data
+
+The dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualization.
+
+```{r}
+counts_long <- clean_counts_df |>
+  pivot_longer(
+    cols      = -gene_id,
+    names_to  = "sample_id",
+    values_to = "counts"
+  )
+
+counts_long 
+```
+
+### Creating one data set from two data sets
+
+After cleaning and restructuring the count data and sample metadata separately, the two datasets were merged using the `sample_id` column as a common identifier. An inner join was used to retain only the samples present in both datasets, ensuring that each gene count was associated with its corresponding sample information. The number of replicates per sample was then checked to verify that the metadata had been correctly assigned.
+
+```{r}
+merged_data <- counts_long |>
+  inner_join(clean_sample_meta, by = "sample_id")
+
+merged_data |>
+  distinct(sample_id, replicate) |>
+  count(replicate)
+
+merged_data
+```
+
+To facilitate the analysis of gene expression at the individual gene level, the merged_data was grouped by `gene_id` and converted into a nested structure using `nest()`. This creates one row per gene, with all corresponding observations, regarding sample_id, counts and information about the donor, stored in a nested tibble.
+
+```{r}
+merged_data_nested <- merged_data |>
+  select(c("gene_id","sample_id","counts","condition_name","condition","sex")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+merged_data_nested
+```
+
+To obtain an overview of gene expression across the different experimental conditions, descriptive statistics were calculated for each gene within each condition. The data were grouped by `gene_id` and `condition_name`, and the mean and standard deviation of the read counts were calculated. This provides an overview of the average expression levels and variability between samples for each gene and condition. Finally, missing values were removed to ensure that the resulting summary dataset contains valid statistical measurements.
+
+```{r}
+gene_summary <- merged_data |>
+  group_by(gene_id, condition_name) |>
+  summarise(
+    mean_counts = mean(counts),
+    sd_counts   = sd(counts),
+    .groups     = "drop"
+  ) |>
+  drop_na()
+
+gene_summary|>
+  slice_sample(n= 10)
+```
+
+```{r}
+dim(gene_summary)
+
+n_distinct(gene_summary$gene_id)
 ```

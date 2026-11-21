@@ -1,0 +1,20 @@
+---
+title: "01_load.qmd"
+format: html
+editor: visual
+---
+
+## Load Data
+
+```{r}
+library(tidyverse)
+
+# sample meta data
+sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
+write_tsv(x = sample_meta, file = "data/01_sample_meta_load.tsv")
+
+# counts data
+counts_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+  as_tibble(rownames = "gene_id")
+write_tsv(x = counts_df, file = "data/01_counts_df_load.tsv")
+```
