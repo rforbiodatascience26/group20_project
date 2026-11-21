@@ -256,13 +256,14 @@ write_tsv(x = clean_sample_meta, file = "data/02_sample_meta_clean.tsv")
 For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained.
 
 ```{r}
-
+clean_counts_raw_df <- counts_raw_df |>
+  filter(rowSums(counts_raw_df[-1] >= 10) >= 80)
 ```
 
 Export the cleaned counts data
 
 ```{r}
-
+write_tsv(x = clean_counts_df, file = "data/02_counts_clean.tsv")
 ```
 
 ## Augment Data
