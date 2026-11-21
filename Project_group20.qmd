@@ -320,14 +320,6 @@ merged_data_nested <- merged_data |>
 merged_data_nested
 ```
 
-```{r}
-merged_data_PCA <- merged_data |>
-  select(c("gene_id","sample_id","log2_counts")) |>
-  pivot_wider(names_from = gene_id, values_from = log2_counts)
-
-merged_data_PCA
-```
-
 To obtain an overview of gene expression across the different experimental conditions, descriptive statistics were calculated for each gene within each condition. The data were grouped by `gene_id` and `condition_name`, and the mean and standard deviation of the read counts were calculated. This provides an overview of the average expression levels and variability between samples for each gene and condition. Finally, missing values were removed to ensure that the resulting summary dataset contains valid statistical measurements.
 
 ```{r}
@@ -348,4 +340,28 @@ gene_summary|>
 dim(gene_summary)
 
 n_distinct(gene_summary$gene_id)
+```
+
+**PCA**
+
+```{r}
+merged_data_PCA <- merged_data |>
+  select(c("gene_id","sample_id","log2_counts", "condition_name")) |>
+  pivot_wider(names_from = gene_id, values_from = log2_counts)
+
+merged_data_PCA
+```
+
+```{r}
+pca_fit <- merged_data_PCA |> 
+  select(where(is.numeric)) |>  
+  prcomp(scale = TRUE) 
+```
+
+```{r}
+library(broom)
+pca_fit |> 
+  augment(merged_data_PCA) |>  
+  ggplot(aes(.fittedPC1, .fittedPC2, color = condition_name)) + 
+  geom_point(size = 1.5)
 ```
