@@ -17,6 +17,20 @@ The data consist of a count matrix with raw read counts for 35,033 genes across 
 ## Load Data
 
 ```{r}
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_cqn_matrix.txt.gz?download=1",
+  destfile = "data/_raw/RNA_cqn_matrix.txt.gz",
+  mode     = "wb"
+)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_sample_metadata.txt.gz?download=1",
+  destfile = "data/_raw/RNA_sample_metadata.txt.gz",
+  mode     = "wb"
+)
+```
+
+```{r}
 library(tidyverse)
 
 # sample meta data
@@ -24,7 +38,7 @@ sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types =
 write_tsv(x = sample_meta, file = "data/01_sample_meta_load.tsv")
 
 # counts data
-counts_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+counts_df <- read.delim("data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
 write_tsv(x = counts_df, file = "data/01_counts_df_load.tsv")
 ```
@@ -188,7 +202,7 @@ clean_sample_meta |>
     received_as       = factor(received_as)
   ) |>
   table1(
-    x = formula(~ sex + received_as + rna_concentration + mean_purity | condition_name),
+    x = formula(~ sex + received_as + rna_concentration | condition_name),
     data = _
   )
 ```
