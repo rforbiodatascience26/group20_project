@@ -228,7 +228,7 @@ For the counts data, genes with consistently low read counts were filtered out t
 ```{r}
 clean_counts_df <- counts_df |>
   # counts with at least 10 counts in at least 5 samples
-  filter(rowSums(counts_df[-1] >= 10) >= 5)
+  filter(rowSums(across(-1) >= 10) >= 84)
 
 ```
 
@@ -294,7 +294,8 @@ gene_summary <- merged_data |>
   ) |>
   drop_na()
 
-head(gene_summary)
+gene_summary|>
+  slice_sample(n= 10)
 ```
 
 ```{r}
