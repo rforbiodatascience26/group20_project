@@ -108,14 +108,7 @@ Selection of the relevant columns for analysis.
 
 ```{r}
 clean_sample_meta <- sample_meta |>
-  select(-c(
-    "ips_received","ips_started","passage_received","media","passage_diff",
-    "diff_start","salmonella_date","atac_date","flow_date","medium_changes",
-    "terminated","open_access","ips_culture_days","passage_diff_bins",
-    "rna_extraction","rna_submit","library_pool","chemistry","rna_auto",
-    "status","ng_ul_mean","harvest_stimulation_days","macrophage_diff_days",
-    "EB_formation","macrophage_harvest","clone","line_id","genotype_id"
-
+  select(c("sample_id","donor","condition","replicate","condition_name","SL1344","IFNg"                  ,"received_as","mean_purity","max_purity", "sex","rna_concentration"                           ,"purity_bins"
   ))
 clean_sample_meta |>
   slice_sample(n = 10)
@@ -138,7 +131,7 @@ clean_sample_meta |>
   filter(if_any(contains("purity"), is.na))
 ```
 
-As we can see, there is a pattern: the NAs seemed to be grouped by the donor. However, there is some inconsistency, there are some donors, that have data in some purity columns, while others seem to have no data at all in every purity column. From this information, the decision was taken to only delete the rows related to the donors that have no data about the purity of their samples. This way, we make sure that further analysis is made on reliable data.
+As we can see, there is a pattern: the NAs seemed to be grouped by the donor. From this information, the decision was taken to only delete the rows related to the donors that have no data about the purity of their samples. This way, we make sure that further analysis is made on reliable data.
 
 But first, we need to filter the donors that follow this characteristic, and then remove them.
 
@@ -148,8 +141,6 @@ clean_sample_meta |>
   select("donor",contains("purity")) |>
   filter(if_all(contains("purity"), is.na))
 ```
-
-**///////DECIDE WHAT TO DO WITH THE REST OF NAs : put them in zero, have them, be the same value as the other columns, or maybe the columns "max_purity_filtered" and "mean_purity_filtered" , the ones that are NAs across all donors that have NAs in their samples, these columns maybe are not relevant and we can remove them//////**
 
 ```{r}
 clean_sample_meta <- clean_sample_meta|>
@@ -177,8 +168,6 @@ clean_sample_meta <- clean_sample_meta |>
 ```
 
 #### Describing a cohort
-
-///////Maybe take out the mean purity, all the values are the same//////
 
 ```{r}
 library("table1")
