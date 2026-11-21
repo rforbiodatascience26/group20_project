@@ -17,6 +17,7 @@ The data consist of a count matrix with raw read counts for 35,033 genes across 
 ## Analysis of the GSE161731 dataset
 
 ```{r}
+#| eval: false
 download.file(
   url      = "https://zenodo.org/records/259661/files/RNA_cqn_matrix.txt.gz?download=1",
   destfile = "data/_raw/RNA_cqn_matrix.txt.gz",
@@ -31,7 +32,7 @@ download.file(
 
 download.file(
   url      = "https://zenodo.org/records/259661/files/RNA_count_matrix.txt.gz?download=1",
-  destfile = "data/_raw/RNA_sample_metadata.txt.gz",
+  destfile = "data/_raw/RNA_count_matrix.txt.gz",
   mode     = "wb"
 )
 ```
@@ -51,7 +52,7 @@ write_tsv(x = counts_raw_df, file = "data/01_counts_raw_df_load.tsv")
 # counts data normalized
 counts_df <- read.delim("data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
-write_tsv(x = counts_raw_df, file = "data/01_counts_raw_df_load.tsv")
+write_tsv(x = counts_df, file = "data/01_counts_raw_df_load.tsv")
 ```
 
 ## Data Description
