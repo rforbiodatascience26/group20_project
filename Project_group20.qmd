@@ -50,9 +50,9 @@ counts_raw_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = F
 write_tsv(x = counts_raw_df, file = "data/01_counts_raw_df_load.tsv")
 
 # counts data normalized
-counts_df <- read.delim("data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
+counts_norm_df <- read.delim("data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
-write_tsv(x = counts_df, file = "data/01_counts_raw_df_load.tsv")
+write_tsv(x = counts_norm_df, file = "data/01_counts_raw_df_load.tsv")
 ```
 
 ## Data Description
@@ -254,7 +254,14 @@ clean_counts_raw_df <- counts_raw_df |>
 Export the cleaned counts data
 
 ```{r}
-write_tsv(x = clean_counts_df, file = "data/02_counts_clean.tsv")
+write_tsv(x = clean_counts_raw_df, file = "data/02_raw_counts_clean.tsv")
+```
+
+### Normalised data
+
+```{r}
+clean_counts_norm_df <- counts_norm_df |>
+  semi_join(clean_counts_raw_df, by = "gene_id")
 ```
 
 ## Augment Data
@@ -264,14 +271,14 @@ write_tsv(x = clean_counts_df, file = "data/02_counts_clean.tsv")
 The dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualization.
 
 ```{r}
-counts_long <- clean_counts_raw_df |>
+counts_norm_long <- clean_counts_norm_df |>
   pivot_longer(
     cols      = -gene_id,
     names_to  = "sample_id",
-    values_to = "counts"
+    values_to = "log2_counts"
   )
 
-counts_long 
+counts_norm_long 
 ```
 
 ### Creating one data set from two data sets
@@ -279,21 +286,33 @@ counts_long
 After cleaning and restructuring the count data and sample metadata separately, the two datasets were merged using the `sample_id` column as a common identifier. An inner join was used to retain only the samples present in both datasets, ensuring that each gene count was associated with its corresponding sample information. The number of replicates per sample was then checked to verify that the metadata had been correctly assigned.
 
 ```{r}
-merged_data <- counts_long |>
+merged_data <- counts_norm_long|>
   inner_join(clean_sample_meta, by = "sample_id")
 
 merged_data |>
+  slice_sample(n = 10)
+```
+
+### Consistency in sample_id naming
+
+```{r}
+merged_data |>
   distinct(sample_id, replicate) |>
   count(replicate)
-
-merged_data
 ```
+
+```{r}
+merged_data <- merged_data |>
+  mutate(sample_id = str_remove(sample_id, "_2"))
+```
+
+## Organization of Data
 
 To facilitate the analysis of gene expression at the individual gene level, the merged_data was grouped by `gene_id` and converted into a nested structure using `nest()`. This creates one row per gene, with all corresponding observations, regarding sample_id, counts and information about the donor, stored in a nested tibble.
 
 ```{r}
 merged_data_nested <- merged_data |>
-  select(c("gene_id","sample_id","counts","condition_name","condition","sex")) |>
+  select(c("gene_id","sample_id","log2_counts","condition_name","condition","sex")) |>
   group_by(gene_id) |>
   nest() |>
   ungroup()
@@ -307,8 +326,8 @@ To obtain an overview of gene expression across the different experimental condi
 gene_summary <- merged_data |>
   group_by(gene_id, condition_name) |>
   summarise(
-    mean_counts = mean(counts),
-    sd_counts   = sd(counts),
+    mean_counts = mean(log2_counts),
+    sd_log2_counts   = sd(log2_counts),
     .groups     = "drop"
   ) |>
   drop_na()
