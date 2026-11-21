@@ -1,5 +1,7 @@
 # group20_project
 
+## Contributions
+
 ## Data retrieval instructions
 
 The datasets used in this project were obtained from zenodo database.
