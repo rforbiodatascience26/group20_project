@@ -14,7 +14,7 @@ The macrophages were not taken directly from patients. Instead, induced stem cel
 
 The data consist of a count matrix with raw read counts for 35,033 genes across these samples and a metadata file that describes each sample, for example its donor, sex, condition and sequencing batch.
 
-## Analysis of the GSE161731 dataset
+## Load Data
 
 ```{r}
 library(tidyverse)
