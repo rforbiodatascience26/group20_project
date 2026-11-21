@@ -28,6 +28,12 @@ download.file(
   destfile = "data/_raw/RNA_sample_metadata.txt.gz",
   mode     = "wb"
 )
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_count_matrix.txt.gz?download=1",
+  destfile = "data/_raw/RNA_sample_metadata.txt.gz",
+  mode     = "wb"
+)
 ```
 
 ```{r}
@@ -37,7 +43,12 @@ library(tidyverse)
 sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
 write_tsv(x = sample_meta, file = "data/01_sample_meta_load.tsv")
 
-# counts data
+# counts raw data
+counts_raw_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+  as_tibble(rownames = "gene_id")
+write_tsv(x = counts_df, file = "data/01_counts_raw_df_load.tsv")
+
+# counts data normalized
 counts_df <- read.delim("data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
 write_tsv(x = counts_df, file = "data/01_counts_df_load.tsv")
@@ -243,19 +254,14 @@ write_tsv(x = clean_sample_meta, file = "data/02_sample_meta_clean.tsv")
 
 For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained.
 
-//////should we do more than 5 samples tho? we have 336 samples, 5 seems very little//////
-
 ```{r}
-clean_counts_df <- counts_df |>
-  # counts with at least 10 counts in at least 5 samples
-  filter(rowSums(across(-1) >= 10) >= 84)
 
 ```
 
 Export the cleaned counts data
 
 ```{r}
-write_tsv(x = clean_counts_df, file = "data/02_counts_data_clean.tsv")
+
 ```
 
 ## Augment Data
