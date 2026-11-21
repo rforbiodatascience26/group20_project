@@ -62,7 +62,7 @@ na_summary_samplemeta <- colSums(is.na(sample_meta)) |>
   enframe(name = "column name", value = "is_na") |>
   filter(is_na > 0)
 
-na_summary
+na_summary_samplemeta
 ```
 
 ### Count Data Details
