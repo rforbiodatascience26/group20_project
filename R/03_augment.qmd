@@ -4,6 +4,12 @@ format: html
 editor: visual
 ---
 
+## Load Libraries
+
+```{r}
+library(tidyverse)
+```
+
 ## Load Data
 
 ```{r}
@@ -31,7 +37,6 @@ download.file(
 ```
 
 ```{r}
-library(tidyverse)
 
 # sample meta data
 sample_meta <- read_tsv("../data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
