@@ -120,13 +120,9 @@ clean_sample_meta <- clean_sample_meta |>
  filter(!received_as == "alive/frozen")
 ```
 
-```{r}
-write_tsv(x = clean_sample_meta, file = "../data/02_sample_meta_clean.tsv")
-```
-
 ### Normalised Counts data
 
-#### Filter low count genes 
+#### Filter low count genes
 
 The authors of the original paper did not filter low-count genes before normalisation (nor do they mention such action), so we used the raw counts to identify them. Genes with consistently low read counts were removed to reduce their influence on the analysis: only genes with at least 10 counts in a minimum of 80 samples were retained
 
@@ -142,8 +138,11 @@ clean_counts_norm_df <- counts_norm_df |>
   semi_join(clean_counts_raw_df, by = "gene_id")
 ```
 
+### Export data
+
 ```{r}
-write_tsv(x = clean_counts_norm_df, file = "../data/02_clean_counts_norm.tsv")
+write_tsv(x = clean_sample_meta, file = "../data/02_sample_meta_clean.tsv")
+write_tsv(x = clean_counts_norm_df, file = "../data/02_counts_norm_clean.tsv")
 ```
 
 ## Augment Data
@@ -192,7 +191,7 @@ merged_data |>
   filter(n > 1)
 ```
 
-Export the augmented data
+### Export Data
 
 ```{r}
 write_tsv(x = merged_data, file = "../data/02_aug_data.tsv")
