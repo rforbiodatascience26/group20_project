@@ -142,11 +142,10 @@ Selection of the relevant columns for analysis.
 
 ```{r}
 clean_sample_meta <- sample_meta |>
-  select(c("sample_id","donor","condition","replicate","condition_name","SL1344","IFNg"                  ,"received_as","mean_purity","max_purity", "sex","rna_concentration"                           ,"purity_bins"
-  ))
+  select(c("sample_id","donor","condition","replicate","condition_name","SL1344","IFNg"                  ,"received_as","mean_purity","max_purity", "sex","rna_concentration"                               ,"purity_bins"))
+
 clean_sample_meta |>
   slice_sample(n = 10)
-
 ```
 
 #### Dealing with NAs
@@ -179,6 +178,9 @@ clean_sample_meta |>
 ```{r}
 clean_sample_meta <- clean_sample_meta|>
   filter(!if_all(contains("purity"), is.na))
+
+clean_sample_meta|>
+  slice_sample(n=10)
 ```
 
 ```{r}
@@ -197,8 +199,10 @@ There are a couple of columns, with a odd name, specifically "SL1344", which ref
 clean_sample_meta <- clean_sample_meta |>
   rename( 
     SL1344_infection = SL1344,
-    IFNg_status = IFNg
-)
+    IFNg_status = IFNg)
+
+clean_sample_meta|>
+  slice_sample(n=10)
 ```
 
 #### Describing a cohort
@@ -240,33 +244,33 @@ Finally, we can export the cleaned sample metadata
 write_tsv(x = clean_sample_meta, file = "data/02_sample_meta_clean.tsv")
 ```
 
-### Counts data
+### Normalised Counts data
 
-#### Filter data
+#### Filter low count genes 
 
-For the counts data, genes with consistently low read counts were filtered out to reduce their influence on our analysis . Only genes with at least 10 counts in a minimum of 5 samples were retained.
+The authors of the original paper did not filter low-count genes before normalisation (nor do they mention such action), so we used the raw counts to identify them. Genes with consistently low read counts were removed to reduce their influence on the analysis: only genes with at least 10 counts in a minimum of 80 samples were retained
 
 ```{r}
 clean_counts_raw_df <- counts_raw_df |>
-  filter(rowSums(counts_raw_df[-1] >= 10) >= 80)
+  filter(rowSums(across(-1) >= 10) >= 80)
 ```
 
-Export the cleaned counts data
-
-```{r}
-write_tsv(x = clean_counts_raw_df, file = "data/02_raw_counts_clean.tsv")
-```
-
-### Normalised data
+We use `semi_join()` to remove the same genes from the normalised data. This function keeps only the rows of counts_norm whose gene_id also appears in the filtered raw data, without adding any columns from it.
 
 ```{r}
 clean_counts_norm_df <- counts_norm_df |>
   semi_join(clean_counts_raw_df, by = "gene_id")
 ```
 
+Exporting the clean normalised data
+
+```{r}
+write_tsv(x = clean_counts_norm_df, file = "data/02_clean_counts_norm.tsv")
+```
+
 ## Augment Data
 
-### Counts data
+### Normalised Counts data
 
 The dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualization.
 
@@ -275,15 +279,15 @@ counts_norm_long <- clean_counts_norm_df |>
   pivot_longer(
     cols      = -gene_id,
     names_to  = "sample_id",
-    values_to = "log2_counts"
-  )
+    values_to = "log2_counts")
 
-counts_norm_long 
+counts_norm_long |>
+  slice_sample(n=10)
 ```
 
 ### Creating one data set from two data sets
 
-After cleaning and restructuring the count data and sample metadata separately, the two datasets were merged using the `sample_id` column as a common identifier. An inner join was used to retain only the samples present in both datasets, ensuring that each gene count was associated with its corresponding sample information. The number of replicates per sample was then checked to verify that the metadata had been correctly assigned.
+The two datasets were merged using the `sample_id` column as a common identifier. The `inner_join()` was used to retain only the samples present in both datasets, ensuring that each gene count was associated with its corresponding sample information.
 
 ```{r}
 merged_data <- counts_norm_long|>
@@ -304,6 +308,12 @@ merged_data |>
 ```{r}
 merged_data <- merged_data |>
   mutate(sample_id = str_remove(sample_id, "_2"))
+```
+
+Export the augmented data
+
+```{r}
+write_tsv(x = merged_data, file = "data/02_aug_data.tsv")
 ```
 
 ## Organization of Data

@@ -7,14 +7,43 @@ editor: visual
 ## Load Data
 
 ```{r}
+#| eval: false
+
+dir.create("../data/_raw", recursive = TRUE, showWarnings = FALSE)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_cqn_matrix.txt.gz?download=1",
+  destfile = "../data/_raw/RNA_cqn_matrix.txt.gz",
+  mode     = "wb"
+)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_sample_metadata.txt.gz?download=1",
+  destfile = "../data/_raw/RNA_sample_metadata.txt.gz",
+  mode     = "wb"
+)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_count_matrix.txt.gz?download=1",
+  destfile = "../data/_raw/RNA_count_matrix.txt.gz",
+  mode     = "wb"
+)
+```
+
+```{r}
 library(tidyverse)
 
 # sample meta data
-sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
-write_tsv(x = sample_meta, file = "data/01_sample_meta_load.tsv")
+sample_meta <- read_tsv("../data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
+write_tsv(x = sample_meta, file = "../data/01_sample_meta_load.tsv")
 
-# counts data
-counts_df <- read.delim("data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+# counts raw data
+counts_raw_df <- read.delim("../data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
   as_tibble(rownames = "gene_id")
-write_tsv(x = counts_df, file = "data/01_counts_df_load.tsv")
+write_tsv(x = counts_raw_df, file = "../data/01_counts_raw_df_load.tsv")
+
+# counts data normalized
+counts_norm_df <- read.delim("../data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
+  as_tibble(rownames = "gene_id")
+write_tsv(x = counts_raw_df, file = "../data/01_counts_norm_df_load.tsv")
 ```
