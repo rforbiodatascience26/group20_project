@@ -246,7 +246,7 @@ write_tsv(x = clean_sample_meta, file = "data/02_sample_meta_clean.tsv")
 
 ### Normalised Counts data
 
-#### Filter low count genes 
+#### Filter low count genes
 
 The authors of the original paper did not filter low-count genes before normalisation (nor do they mention such action), so we used the raw counts to identify them. Genes with consistently low read counts were removed to reduce their influence on the analysis: only genes with at least 10 counts in a minimum of 80 samples were retained
 
@@ -265,7 +265,7 @@ clean_counts_norm_df <- counts_norm_df |>
 Exporting the clean normalised data
 
 ```{r}
-write_tsv(x = clean_counts_norm_df, file = "data/02_clean_counts_norm.tsv")
+write_tsv(x = clean_counts_norm_df, file = "data/02_counts_norm_clean.tsv")
 ```
 
 ## Augment Data
