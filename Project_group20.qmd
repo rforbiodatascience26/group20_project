@@ -38,7 +38,7 @@ download.file(
 ```
 
 ```{r}
-library(tidyverse)
+library("tidyverse")
 
 # sample meta data
 sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
@@ -369,7 +369,7 @@ pca_fit <- merged_data_PCA |>
 ```
 
 ```{r}
-library(broom)
+library("broom")
 pca_fit |> 
   augment(merged_data_PCA) |>  
   ggplot(aes(.fittedPC1, .fittedPC2, color = condition_name)) + 
