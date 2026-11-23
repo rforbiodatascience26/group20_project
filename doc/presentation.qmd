@@ -1,0 +1,70 @@
+---
+title: "R for Bio Data Science Project"
+subtitle: "RNA-seq Analysis | Gene Expression in SL1344-Infected Cells Primed with IFN-γ"
+author: "Group 20"
+
+format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    footer: "R for Bio Data Science 2026 | DTU"
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    fontsize: 25px
+    include-in-header:
+      text: |
+        <style>
+        /* Background colour */
+        .reveal {
+          background-color: #F4F6F7;
+        }
+
+        /* Heading colours */
+        .reveal h1, .reveal h2, .reveal h3 {
+          color: #183747;
+        }
+       
+        /* Slide headings */
+        .reveal h2 {
+            font-size: 2em;
+        }
+
+        /* Body text colours */
+        .reveal p, .reveal li {
+          color: #34495E;
+        }
+
+        /* Link colour */
+        .reveal a {
+          color: #398C89;
+        }
+
+        /* Footer styling */
+        .reveal .footer {
+          color: #71848A;
+          font-size: 14px;
+        }
+        </style>
+
+editor: visual
+---
+
+## Introduction
+
+**Paper** :
+
+Alasoo et al. (2018). Shared genetic effects on chromatin and gene expression indicate a role for enhancer priming in immune response. *Nature Genetics*, *50*(3), 424–431
+
+## Methods
+
+###put the cleaning and the augment explanations here###
+
+## Results
+
+###descriptive plots here###
+
+## Discussion
+
+###analysis here###

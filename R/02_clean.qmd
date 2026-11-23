@@ -7,7 +7,7 @@ editor: visual
 ## Load Libraries
 
 ```{r}
-library(tidyverse)
+library("tidyverse")
 ```
 
 ## Load Data
