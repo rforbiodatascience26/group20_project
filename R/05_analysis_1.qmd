@@ -1,7 +1,6 @@
 ---
-title: "05_analysis_1.qmd"
+title: "05_analysis_2"
 format: html
-editor: visual
 ---
 
 ## Load Libraries
@@ -10,6 +9,7 @@ editor: visual
 library("tidyverse")
 library("broom")
 library("ggrepel")
+library("factoextra")
 ```
 
 ## Load Data
@@ -39,7 +39,6 @@ download.file(
 ```
 
 ```{r}
-
 # sample meta data
 sample_meta <- read_tsv("../data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
 write_tsv(x = sample_meta, file = "../data/01_sample_meta_load.tsv")
@@ -204,239 +203,39 @@ merged_data |>
 write_tsv(x = merged_data, file = "../data/02_aug_data.tsv")
 ```
 
-## Analysis of Data
-
-### Infected Cells
-
-To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with "naive" as the first level (set to be the reference).
+## Analysis of Data - PCA Plot
 
 ```{r}
-compare_infected <- merged_data |>
-  filter(SL1344_infection == "infected") |>
-  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
+merged_data_PCA <- merged_data |>
+  select(c("gene_id","sample_id","log2_counts", "condition_name")) |>
+  pivot_wider(names_from = gene_id, values_from = log2_counts)
+
+merged_data_PCA
 ```
 
-Selected the columns needed for the model and nested the data by gene_id.
-
 ```{r}
-compare_infected_nested <- compare_infected |>
-  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
-  group_by(gene_id) |>
-  nest() |>
-  ungroup()
-
-compare_infected_nested |>
-  slice_sample(n=10)
+pca_fit <- merged_data_PCA |> 
+  select(where(is.numeric)) |>  
+  prcomp(scale = TRUE) 
 ```
 
-Fit a linear model for every gene. We use `mutate()` together with `map()`, which applies the same function to each element of data column. The function is `lm()` with the formula "log2_counts \~ IFNg_status".
-
-For each gene, the model estimates the mean expression in naive cells (the intercept) and the difference between primed and naive cells. Since the values are on a log2 scale, this difference is the log2 fold change.
-
 ```{r}
-compare_infected_nested <- compare_infected_nested |> 
-  mutate(model_object = map(.x = data,
-                            .f = ~lm(formula = log2_counts ~ IFNg_status,
-                            data = .x)))
-```
-
-We used `tidy()` from broom library to convert each model into a table of estimates, p-values and confidence intervals.
-
-```{r}
-compare_infected_nested <- compare_infected_nested |> 
-  mutate(model_object_tidy = map(.x = model_object,
-                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
-```
-
-Unnest the data
-
-```{r}
-estimates_infected <- compare_infected_nested |> 
-  unnest(model_object_tidy)
-```
-
-From the unnested results we kept only the relevant rows and the columns needed for further analysis.
-
-We do a multiple testing correction, ajusting the p.values using `p.adjust()`, which gives the q.value. Finally, we used `case_when()` to classify each gene in a new column: a gene is "up" if q.value \< 0.05 and the log2 fold change is above 1 (at least twofold higher in primed cells); "down" if q.value \< 0.05 and the log2 fold change is below -1 (at least twofold lower in primed cells), and "not significant" otherwise (q.value \>= 0.05) .
-
-```{r}
-estimates_infected <- estimates_infected |> 
-  filter(term == "IFNg_statusprimed") |> 
-  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
-  ungroup() |> 
-  mutate(q.value = p.adjust(p.value),
-         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
-                          q.value < 0.05 & estimate < -0.59 ~ "down",
-                          TRUE ~ "not significant"))
-```
-
-#### Visualise
-
-**Volcano Plot : Changes in gene expression in infected cells when primed with IFNg**
-
-We selected the ten genes with the largest absolute log2 fold change to label them on the plot.
-
-```{r}
-top_genes <- estimates_infected |>
-  slice_max(abs(estimate), n = 10) |>
-  pull(gene_id)
-```
-
-We added a column that holds the gene_id for the ten selected genes and an empty label for all others, so that only those ten are labelled on the plot.
-
-```{r}
-estimates_infected <- estimates_infected |>
-  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
-                           !(gene_id %in% top_genes) ~ "")) 
-```
-
-Plotted with ggplot.
-
-```{r}
-estimates_infected |> 
-  ggplot(aes(x = estimate, 
-             y = -log10(p.value), 
-             color = sign,
-             label = top10)) +
-  
-  geom_point(alpha = 0.5, size = 1.2) +
-  
-   geom_text_repel(size = 2,
-                  max.overlaps = 10,
-                  nudge_x = -1.3, 
-                  direction = "y") +
-  
-  geom_hline(yintercept = 0) +
-  
-  scale_colour_manual(values = c("up" = "brown2",
-                                 "down" = "deepskyblue4",
-                                 "not significant" = "grey70")) +
-  
-  labs(x = "log2 fold change (primed vs naive)",
-       y = "-log10(p)",
-       title = "Effect of IFNγ priming on gene expression in SL1344 infected cells",
-       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
-       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
-  
+fviz_pca_ind(
+  pca_fit,
+  geom.ind = "point",
+  col.ind = merged_data_PCA$condition_name,
+  palette = "jco",
+  addEllipses = TRUE,
+  ellipse.level = 0.95,
+  legend.title = "Condition"
+) +
   theme_minimal() +
-  
+  labs(
+    title = "PCA Plot Mapping the 4 conditions",
+    subtitle = "Projection of samples onto PC1 and PC2",
+    caption = "Plot Design (used on Lab07) from \nhttps://www.r-bloggers.com/2026/06/pca-in-r-principal-component-analysis-step-by-step-prcomp-ggplot2/#google_vignette"
+  ) +
   theme(
-    legend.position = "none",
-    plot.title.position = "plot",
-    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
-    plot.subtitle = element_text(hjust = 0, size = 11),
-    axis.title = element_text(size = 11),
-    panel.grid.minor = element_blank()
-  )
-```
-
-Seeing the number of genes that are down regulated and up regulated
-
-```{r}
-estimates_infected |>
-  count(sign)
-```
-
-### Control Cells
-
-Now, we do same pipeline we did for infected cells, but for the control samples, filtering only the rows corresponding to the control.
-
-```{r}
-compare_control <- merged_data |>
-  filter(SL1344_infection == "control") |>
-  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
-```
-
-```{r}
-compare_control_nested <- compare_control |>
-  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
-  group_by(gene_id) |>
-  nest() |>
-  ungroup()
-
-compare_control_nested |>
-  slice_sample(n=10)
-```
-
-```{r}
-compare_control_nested <- compare_control_nested |> 
-  mutate(model_object = map(.x = data,
-                   .f = ~lm(formula = log2_counts ~ IFNg_status,
-                            data = .x)))
-```
-
-```{r}
-compare_control_nested <- compare_control_nested |> 
-  mutate(model_object_tidy = map(.x = model_object,
-                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
-```
-
-```{r}
-estimates_control <- compare_control_nested |> 
-  unnest(model_object_tidy)
-```
-
-```{r}
-estimates_control <- estimates_control |> 
-  filter(term == "IFNg_statusprimed") |> 
-  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
-  ungroup() |> 
-  mutate(q.value = p.adjust(p.value),
-         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
-                          q.value < 0.05 & estimate < -0.59 ~ "down",
-                          TRUE ~ "not significant"))
-```
-
-#### Visualise
-
-**Volcano Plot : Changes in gene expression in control cells when primed with IFNg**
-
-```{r}
-top_genes <- estimates_control |>
-  slice_max(abs(estimate), n = 10) |>
-  pull(gene_id)
-```
-
-```{r}
-estimates_control <- estimates_control |>
-  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
-                           !(gene_id %in% top_genes) ~ "")) 
-```
-
-Plotted with ggplot.
-
-```{r}
-estimates_control |> 
-  ggplot(aes(x = estimate, 
-             y = -log10(p.value), 
-             color = sign,
-             label = top10)) +
-  
-  geom_point(alpha = 0.5, size = 1.2) +
-  
-   geom_text_repel(size = 2,
-                  max.overlaps = 10) +
-  
-  geom_hline(yintercept = 0) +
-  
-  scale_colour_manual(values = c("up" = "brown2",
-                                 "down" = "deepskyblue4",
-                                 "not significant" = "grey70")) +
-  
-  labs(x = "log2 fold change (primed vs naive)",
-       y = "-log10(p)",
-       title = "Effect of IFNγ priming on gene expression in control cells",
-       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
-       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
-  
-  theme_minimal() +
-  
-  theme(
-    legend.position = "none",
-    plot.title.position = "plot",
-    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
-    plot.subtitle = element_text(hjust = 0, size = 11),
-    axis.title = element_text(size = 11),
-    panel.grid.minor = element_blank()
+    plot.caption = element_text(hjust = 0, size = 8, color = "gray30")
   )
 ```
