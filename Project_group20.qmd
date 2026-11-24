@@ -6,6 +6,14 @@ editor: visual
 
 # Project for R Bio Data Science
 
+## Introduction
+
+In this project we will work with RNA-seq gene expression data from human macrophages, published by Alasoo et al. 2018 in Nature Genetics.
+
+The macrophages were not taken directly from patients. Instead, induced stem cells from 84 healthy, unrelated donors, were differentiated into macrophages in the lab. Each donor's cells were exposed to four conditions: naive (untreated), IFNg (interferon-gamma for 18 hours), SL1344 (*Salmonella* infection for 5 hours) and IFNg_SL1344 (both treatments). Each donor contributes exactly one sample per condition and the dataset contains 336 samples in total.
+
+The data consist of a count matrix with raw read counts for 35,033 genes across these samples, a count matrix normalised using the cqn R package and a metadata file that describes each sample, for example its donor, sex, condition and sequencing batch.
+
 ## Load Libraries
 
 ```{r}
@@ -15,14 +23,6 @@ library("broom")
 library("ggplot2")
 library("factoextra")
 ```
-
-## Introduction
-
-In this project we will work with RNA-seq gene expression data from human macrophages, published by Alasoo et al. 2018 in Nature Genetics.
-
-The macrophages were not taken directly from patients. Instead, induced stem cells from 84 healthy, unrelated donors in the HipSci collection, were differentiated into macrophages in the lab. Each donor's cells were exposed to four conditions: naive (untreated), IFNg (interferon-gamma for 18 hours), SL1344 (*Salmonella* infection for 5 hours) and IFNg_SL1344 (both treatments). Each donor contributes exactly one sample per condition and the dataset contains 336 samples in total.
-
-The data consist of a count matrix with raw read counts for 35,033 genes across these samples and a metadata file that describes each sample, for example its donor, sex, condition and sequencing batch.
 
 ## Load Data
 
@@ -68,7 +68,9 @@ write_tsv(x = counts_norm_df, file = "data/01_counts_raw_df_load.tsv")
 
 Before filtering or transforming the dataset, we inspect the dimensions, missing values, and distributions of both the sample metadata and the raw gene count matrix.
 
-### Sample Metadata Details
+### 1. Overview
+
+#### Sample Metadata 
 
 Overview of a portion of the Sample Metadata we will be working with.
 
@@ -77,68 +79,74 @@ sample_meta |>
   slice_sample(n = 10)
 ```
 
-#### 1. Dimensions of the data
+#### Raw Count Data
 
-Firstly, we observe the dimensions of the sample data.
-
-```{r}
-dim(sample_meta)
-```
-
-#### 2. Duplicates
-
-Investigate whether there are replicates of the same sample.
-
-```{r}
-sample_meta |>
-  count(sample_id) |>
-  filter(n > 1)
-```
-
-#### 3. Missing Values (NA)
-
-Checking if there are NAs in this metadata.
-
-```{r}
-#count NAs
-na_summary_samplemeta <- colSums(is.na(sample_meta)) |>
-  enframe(name = "column name", value = "is_na") |>
-  filter(is_na > 0)
-
-na_summary_samplemeta
-```
-
-### Count Data Details
-
-Overview of a portion of the counts data we will be working with.
+Overview of a portion of the raw counts data we will be working with.
 
 ```{r}
 counts_raw_df |>
   slice_sample(n = 10)
 ```
 
-#### 1. Dimensions
+#### Normalized Count Data Details
+
+Overview of a portion of the normalized counts data we will be working with.
+
+```{r}
+counts_norm_df |>
+  slice_sample(n = 10)
+```
+
+### 2. Dimensions of the data
+
+#### Sample Metadata 
+
+```{r}
+dim(sample_meta)
+```
+
+#### Raw Count Data
 
 ```{r}
 dim(counts_raw_df)
+```
+
+#### Normalized Count Data Details
+
+```{r}
+dim(counts_norm_df)
+```
+
+### 3. Missing values
+
+#### Sample Metadata 
+
+```{r}
+sum(is.na(sample_meta))
+```
+
+#### Raw Count Data
+
+```{r}
 sum(is.na(counts_raw_df))
 ```
 
-#### 2. Duplicates
-
-Checking the columns to see if there is any sample_id that has replicates
+#### Normalized Count Data Details
 
 ```{r}
-# cheking if there are any names of columns that have duplicates
-anyDuplicated(names(counts_raw_df))
+sum(is.na(counts_norm_df))
 ```
 
-#### 3. Missing Values (NA)
+### 4. Duplicates
 
-Investigating if there is any sample that doesn't have data for 1 or more genes.
+Checking if we have duplicate sample_ids, e.g from replicates.
+
+#### Sample Metadata 
 
 ```{r}
-sum(is.na(counts_raw_df))
+sample_meta |>
+  count(sample_id) |>
+  filter(n > 1)
 ```
 
 ## Clean Data
