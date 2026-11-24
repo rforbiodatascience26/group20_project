@@ -375,3 +375,29 @@ pca_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = condition_name)) + 
   geom_point(size = 1.5)
 ```
+
+```{r}
+library(ggplot2)
+library(factoextra)
+
+fviz_pca_ind(
+  pca_fit,
+  geom.ind = "point",
+  col.ind = merged_data_PCA$condition_name,
+  palette = "jco",
+  addEllipses = TRUE,
+  ellipse.level = 0.95,
+  legend.title = "Condition"
+) +
+  theme_minimal() +
+  labs(
+    title = "PCA Plot Mapping the 4 conditions",
+    subtitle = "Projection of samples onto PC1 and PC2",
+    caption = "Plot Design (used on Lab07) from \nhttps://www.r-bloggers.com/2026/06/pca-in-r-principal-component-analysis-step-by-step-prcomp-ggplot2/#google_vignette"
+  ) +
+  theme(
+    plot.caption = element_text(hjust = 0, size = 8, color = "gray30")
+  )
+
+```
+
