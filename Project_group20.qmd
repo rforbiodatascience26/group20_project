@@ -70,7 +70,7 @@ Before filtering or transforming the dataset, we inspect the dimensions, missing
 
 ### 1. Overview
 
-#### Sample Metadata 
+#### Sample Metadata
 
 Overview of a portion of the Sample Metadata we will be working with.
 
@@ -99,7 +99,7 @@ counts_norm_df |>
 
 ### 2. Dimensions of the data
 
-#### Sample Metadata 
+#### Sample Metadata
 
 ```{r}
 dim(sample_meta)
@@ -119,7 +119,7 @@ dim(counts_norm_df)
 
 ### 3. Missing values
 
-#### Sample Metadata 
+#### Sample Metadata
 
 ```{r}
 sum(is.na(sample_meta))
@@ -141,7 +141,7 @@ sum(is.na(counts_norm_df))
 
 Checking if we have duplicate sample_ids, e.g from replicates.
 
-#### Sample Metadata 
+#### Sample Metadata
 
 ```{r}
 sample_meta |>

@@ -1,5 +1,5 @@
 ---
-title: "05_analysis_1.qmd"
+title: "05_analysis_2.qmd"
 format: html
 editor: visual
 ---
@@ -293,7 +293,7 @@ estimates_infected <- estimates_infected |>
 Plotted with ggplot.
 
 ```{r}
-estimates_infected |> 
+volcano_plot_infected <- estimates_infected |> 
   ggplot(aes(x = estimate, 
              y = -log10(p.value), 
              color = sign,
@@ -328,6 +328,8 @@ estimates_infected |>
     axis.title = element_text(size = 11),
     panel.grid.minor = element_blank()
   )
+
+volcano_plot_infected
 ```
 
 Seeing the number of genes that are down regulated and up regulated
@@ -406,7 +408,7 @@ estimates_control <- estimates_control |>
 Plotted with ggplot.
 
 ```{r}
-estimates_control |> 
+volcano_plot_control <- estimates_control |> 
   ggplot(aes(x = estimate, 
              y = -log10(p.value), 
              color = sign,
@@ -439,4 +441,24 @@ estimates_control |>
     axis.title = element_text(size = 11),
     panel.grid.minor = element_blank()
   )
+
+volcano_plot_control
+```
+
+```{r}
+ggsave(
+  filename = "../results/05_key_plot_2.1.png",
+  plot     = volcano_plot_infected,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
+
+ggsave(
+  filename = "../results/05_key_plot_2.2.png",
+  plot     = volcano_plot_control,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
 ```
