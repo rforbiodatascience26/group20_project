@@ -6,7 +6,7 @@ editor: visual
 
 # Project for R Bio Data Science
 
-## Load Libraries 
+## Load Libraries
 
 ```{r}
 library("tidyverse")
@@ -355,7 +355,11 @@ n_distinct(gene_summary$gene_id)
 
 ## Analysis Plots
 
-### 1. PCA
+### 1. PCA Plot
+
+At the start of the exploratory analysis, it is usual to perform a Principal Component Analysis (PCA) to evaluate global variation in the dataset and check whether samples separate according to their experimental conditions.
+
+To prepare the data for PCA, we first reshaped `merged_data` into a wide format (`merged_data_PCA`) using pivot_wider(), so that each row represents a single sample and each column corresponds to a gene's normalized expression (`log2_counts`).
 
 ```{r}
 merged_data_PCA <- merged_data |>
@@ -365,18 +369,15 @@ merged_data_PCA <- merged_data |>
 merged_data_PCA
 ```
 
+Next, we selected only the numeric columns (the gene expression values) and computed the principal components using `prcomp(scale = TRUE)`. Scaling standardizes the variables so that genes with higher overall expression levels do not dominate the variance calculation.
+
 ```{r}
 pca_fit <- merged_data_PCA |> 
   select(where(is.numeric)) |>  
   prcomp(scale = TRUE) 
 ```
 
-```{r}
-pca_fit |> 
-  augment(merged_data_PCA) |>  
-  ggplot(aes(.fittedPC1, .fittedPC2, color = condition_name)) + 
-  geom_point(size = 1.5)
-```
+Finally, we projected the samples onto the first two principal components (`PC1` and `PC2`) using `fviz_pca_ind()`. Samples were colored by `condition_name` and grouped with 95% confidence ellipses to visualize clustering across the four treatments.
 
 ```{r}
 fviz_pca_ind(
@@ -397,9 +398,9 @@ fviz_pca_ind(
   theme(
     plot.caption = element_text(hjust = 0, size = 8, color = "gray30")
   )
-
-
 ```
+
+As shown in the PCA plot, the samples separate cleanly into four distinct clusters corresponding to the experimental conditions (`naive`, `IFNg`, `SL1344`, and `IFNg_SL1344`). This shows that the main source of variation in the dataset is driven by the biological treatments rather than technical effects.
 
 ### 2. Volcano Plot
 
