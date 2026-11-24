@@ -352,7 +352,13 @@ dim(gene_summary)
 n_distinct(gene_summary$gene_id)
 ```
 
-**PCA**
+## Description Plots
+
+## Analysis Plots
+
+### 1. Volcano Plot
+
+### 2. PCA
 
 ```{r}
 merged_data_PCA <- merged_data |>
@@ -401,3 +407,4 @@ fviz_pca_ind(
 
 ```
 
+### 3. 
