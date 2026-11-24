@@ -1,5 +1,5 @@
 ---
-title: "05_analysis_2"
+title: "05_analysis_1"
 format: html
 ---
 
@@ -228,7 +228,7 @@ pca_fit <- merged_data_PCA |>
 Finally, we projected the samples onto the first two principal components (`PC1` and `PC2`) using `fviz_pca_ind()`. Samples were colored by `condition_name` and grouped with 95% confidence ellipses to visualize clustering across the four treatments.
 
 ```{r}
-fviz_pca_ind(
+pca_plot <- fviz_pca_ind(
   pca_fit,
   geom.ind = "point",
   col.ind = merged_data_PCA$condition_name,
@@ -246,6 +246,16 @@ fviz_pca_ind(
   theme(
     plot.caption = element_text(hjust = 0, size = 8, color = "gray30")
   )
+
+pca_plot
+
+ggsave(
+  filename = "../results/05_key_plot_1.png",
+  plot     = pca_plot,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
 ```
-As shown in the PCA plot, the samples separate cleanly into four distinct clusters corresponding to the experimental conditions (`naive`, `IFNg`, `SL1344`, and `IFNg_SL1344`). 
-This shows that the main source of variation in the dataset is driven by the biological treatments rather than technical effects.
+
+As shown in the PCA plot, the samples separate cleanly into four distinct clusters corresponding to the experimental conditions (`naive`, `IFNg`, `SL1344`, and `IFNg_SL1344`). This shows that the main source of variation in the dataset is driven by the biological treatments rather than technical effects.
