@@ -10,9 +10,19 @@ editor: visual
 
 In this project we will work with RNA-seq gene expression data from human macrophages, published by Alasoo et al. 2018 in Nature Genetics.
 
-The macrophages were not taken directly from patients. Instead, induced stem cells from 84 healthy, unrelated donors in the HipSci collection, were differentiated into macrophages in the lab. Each donor's cells were exposed to four conditions: naive (untreated), IFNg (interferon-gamma for 18 hours), SL1344 (*Salmonella* infection for 5 hours) and IFNg_SL1344 (both treatments). Each donor contributes exactly one sample per condition and the dataset contains 336 samples in total.
+The macrophages were not taken directly from patients. Instead, induced stem cells from 84 healthy, unrelated donors, were differentiated into macrophages in the lab. Each donor's cells were exposed to four conditions: naive (untreated), IFNg (interferon-gamma for 18 hours), SL1344 (*Salmonella* infection for 5 hours) and IFNg_SL1344 (both treatments). Each donor contributes exactly one sample per condition and the dataset contains 336 samples in total.
 
-The data consist of a count matrix with raw read counts for 35,033 genes across these samples and a metadata file that describes each sample, for example its donor, sex, condition and sequencing batch.
+The data consist of a count matrix with raw read counts for 35,033 genes across these samples, a count matrix normalised using the cqn R package and a metadata file that describes each sample, for example its donor, sex, condition and sequencing batch.
+
+## Load Libraries
+
+```{r}
+library("tidyverse")
+library("table1")
+library("broom")
+library("ggplot2")
+library("factoextra")
+```
 
 ## Load Data
 
@@ -38,7 +48,6 @@ download.file(
 ```
 
 ```{r}
-library("tidyverse")
 
 # sample meta data
 sample_meta <- read_tsv("data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
@@ -59,7 +68,9 @@ write_tsv(x = counts_norm_df, file = "data/01_counts_raw_df_load.tsv")
 
 Before filtering or transforming the dataset, we inspect the dimensions, missing values, and distributions of both the sample metadata and the raw gene count matrix.
 
-### Sample Metadata Details
+### 1. Overview
+
+#### Sample Metadata
 
 Overview of a portion of the Sample Metadata we will be working with.
 
@@ -68,68 +79,74 @@ sample_meta |>
   slice_sample(n = 10)
 ```
 
-#### 1. Dimensions of the data
+#### Raw Count Data
 
-Firstly, we observe the dimensions of the sample data.
-
-```{r}
-dim(sample_meta)
-```
-
-#### 2. Duplicates
-
-Investigate whether there are replicates of the same sample.
-
-```{r}
-sample_meta |>
-  count(sample_id) |>
-  filter(n > 1)
-```
-
-#### 3. Missing Values (NA)
-
-Checking if there are NAs in this metadata.
-
-```{r}
-#count NAs
-na_summary_samplemeta <- colSums(is.na(sample_meta)) |>
-  enframe(name = "column name", value = "is_na") |>
-  filter(is_na > 0)
-
-na_summary_samplemeta
-```
-
-### Count Data Details
-
-Overview of a portion of the counts data we will be working with.
+Overview of a portion of the raw counts data we will be working with.
 
 ```{r}
 counts_raw_df |>
   slice_sample(n = 10)
 ```
 
-#### 1. Dimensions
+#### Normalized Count Data Details
+
+Overview of a portion of the normalized counts data we will be working with.
+
+```{r}
+counts_norm_df |>
+  slice_sample(n = 10)
+```
+
+### 2. Dimensions of the data
+
+#### Sample Metadata
+
+```{r}
+dim(sample_meta)
+```
+
+#### Raw Count Data
 
 ```{r}
 dim(counts_raw_df)
+```
+
+#### Normalized Count Data Details
+
+```{r}
+dim(counts_norm_df)
+```
+
+### 3. Missing values
+
+#### Sample Metadata
+
+```{r}
+sum(is.na(sample_meta))
+```
+
+#### Raw Count Data
+
+```{r}
 sum(is.na(counts_raw_df))
 ```
 
-#### 2. Duplicates
-
-Checking the columns to see if there is any sample_id that has replicates
+#### Normalized Count Data Details
 
 ```{r}
-# cheking if there are any names of columns that have duplicates
-anyDuplicated(names(counts_raw_df))
+sum(is.na(counts_norm_df))
 ```
 
-#### 3. Missing Values (NA)
+### 4. Duplicates
 
-Investigating if there is any sample that doesn't have data for 1 or more genes.
+Checking if we have duplicate sample_ids, e.g from replicates.
+
+#### Sample Metadata
 
 ```{r}
-sum(is.na(counts_raw_df))
+sample_meta |>
+  count(sample_id) |>
+  filter(n > 1)
 ```
 
 ## Clean Data
@@ -183,14 +200,6 @@ clean_sample_meta|>
   slice_sample(n=10)
 ```
 
-```{r}
-#clean_sample_meta |>
-  #filter(if_any(everything(), is.na))
-
-#clean_sample_meta <- clean_sample_meta |>
-  #drop_na()
-```
-
 #### Fixing columns naming
 
 There are a couple of columns, with a odd name, specifically "SL1344", which refers to if it is a sample control or if the sample was infected with *Salmonella*; and also "IFNg", which refers if the sample was exposed to IFNγ (primed) or not (naive). Thus, the group decided to change this names for better understanding and consistency reasons.
@@ -208,8 +217,6 @@ clean_sample_meta|>
 #### Describing a cohort
 
 ```{r}
-library("table1")
-
 clean_sample_meta |>
   mutate(
     condition_name    = factor(condition_name),
@@ -356,9 +363,11 @@ n_distinct(gene_summary$gene_id)
 
 ## Analysis Plots
 
-### 1. Volcano Plot
+### 1. PCA Plot
 
-### 2. PCA
+At the start of the exploratory analysis, it is usual to perform a Principal Component Analysis (PCA) to evaluate global variation in the dataset and check whether samples separate according to their experimental conditions.
+
+To prepare the data for PCA, we first reshaped `merged_data` into a wide format (`merged_data_PCA`) using pivot_wider(), so that each row represents a single sample and each column corresponds to a gene's normalized expression (`log2_counts`).
 
 ```{r}
 merged_data_PCA <- merged_data |>
@@ -368,24 +377,17 @@ merged_data_PCA <- merged_data |>
 merged_data_PCA
 ```
 
+Next, we selected only the numeric columns (the gene expression values) and computed the principal components using `prcomp(scale = TRUE)`. Scaling standardizes the variables so that genes with higher overall expression levels do not dominate the variance calculation.
+
 ```{r}
 pca_fit <- merged_data_PCA |> 
   select(where(is.numeric)) |>  
   prcomp(scale = TRUE) 
 ```
 
-```{r}
-library("broom")
-pca_fit |> 
-  augment(merged_data_PCA) |>  
-  ggplot(aes(.fittedPC1, .fittedPC2, color = condition_name)) + 
-  geom_point(size = 1.5)
-```
+Finally, we projected the samples onto the first two principal components (`PC1` and `PC2`) using `fviz_pca_ind()`. Samples were colored by `condition_name` and grouped with 95% confidence ellipses to visualize clustering across the four treatments.
 
 ```{r}
-library(ggplot2)
-library(factoextra)
-
 fviz_pca_ind(
   pca_fit,
   geom.ind = "point",
@@ -404,7 +406,252 @@ fviz_pca_ind(
   theme(
     plot.caption = element_text(hjust = 0, size = 8, color = "gray30")
   )
+```
 
+As shown in the PCA plot, the samples separate cleanly into four distinct clusters corresponding to the experimental conditions (`naive`, `IFNg`, `SL1344`, and `IFNg_SL1344`). This shows that the main source of variation in the dataset is driven by the biological treatments rather than technical effects.
+
+### 2. Volcano Plot
+
+#### Infected Cells
+
+To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with "naive" as the first level (set to be the reference).
+
+```{r}
+compare_infected <- merged_data |>
+  filter(SL1344_infection == "infected") |>
+  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
+```
+
+Selected the columns needed for the model and nested the data by gene_id.
+
+```{r}
+compare_infected_nested <- compare_infected |>
+  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+compare_infected_nested |>
+  slice_sample(n=10)
+```
+
+Fit a linear model for every gene. We use `mutate()` together with `map()`, which applies the same function to each element of data column. The function is `lm()` with the formula "log2_counts \~ IFNg_status".
+
+For each gene, the model estimates the mean expression in naive cells (the intercept) and the difference between primed and naive cells. Since the values are on a log2 scale, this difference is the log2 fold change.
+
+```{r}
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object = map(.x = data,
+                            .f = ~lm(formula = log2_counts ~ IFNg_status,
+                            data = .x)))
+```
+
+We used `tidy()` from broom library to convert each model into a table of estimates, p-values and confidence intervals.
+
+```{r}
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
+```
+
+Unnest the data
+
+```{r}
+estimates_infected <- compare_infected_nested |> 
+  unnest(model_object_tidy)
+```
+
+From the unnested results we kept only the relevant rows and the columns needed for further analysis.
+
+We do a multiple testing correction, ajusting the p.values using `p.adjust()`, which gives the q.value. Finally, we used `case_when()` to classify each gene in a new column: a gene is "up" if q.value \< 0.05 and the log2 fold change is above 1 (at least twofold higher in primed cells); "down" if q.value \< 0.05 and the log2 fold change is below -1 (at least twofold lower in primed cells), and "not significant" otherwise (q.value \>= 0.05) .
+
+```{r}
+estimates_infected <- estimates_infected |> 
+  filter(term == "IFNg_statusprimed") |> 
+  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
+  ungroup() |> 
+  mutate(q.value = p.adjust(p.value),
+         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
+                          q.value < 0.05 & estimate < -0.59 ~ "down",
+                          TRUE ~ "not significant"))
+```
+
+#### Visualise
+
+**Volcano Plot : Changes in gene expression in infected cells when primed with IFNg**
+
+We selected the ten genes with the largest absolute log2 fold change to label them on the plot.
+
+```{r}
+top_genes <- estimates_infected |>
+  slice_max(abs(estimate), n = 10) |>
+  pull(gene_id)
+```
+
+We added a column that holds the gene_id for the ten selected genes and an empty label for all others, so that only those ten are labelled on the plot.
+
+```{r}
+estimates_infected <- estimates_infected |>
+  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
+                           !(gene_id %in% top_genes) ~ "")) 
+```
+
+Plotted with ggplot.
+
+```{r}
+estimates_infected |> 
+  ggplot(aes(x = estimate, 
+             y = -log10(p.value), 
+             color = sign,
+             label = top10)) +
+  
+  geom_point(alpha = 0.5, size = 1.2) +
+  
+   geom_text_repel(size = 2,
+                  max.overlaps = 10,
+                  nudge_x = -1.3, 
+                  direction = "y") +
+  
+  geom_hline(yintercept = 0) +
+  
+  scale_colour_manual(values = c("up" = "brown2",
+                                 "down" = "deepskyblue4",
+                                 "not significant" = "grey70")) +
+  
+  labs(x = "log2 fold change (primed vs naive)",
+       y = "-log10(p)",
+       title = "Effect of IFNγ priming on gene expression in SL1344 infected cells",
+       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
+       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
+  
+  theme_minimal() +
+  
+  theme(
+    legend.position = "none",
+    plot.title.position = "plot",
+    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
+    plot.subtitle = element_text(hjust = 0, size = 11),
+    axis.title = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Seeing the number of genes that are down regulated and up regulated
+
+```{r}
+estimates_infected |>
+  count(sign)
+```
+
+#### Control Cells
+
+Now, we do same pipeline we did for infected cells, but for the control samples, filtering only the rows corresponding to the control.
+
+```{r}
+compare_control <- merged_data |>
+  filter(SL1344_infection == "control") |>
+  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
+```
+
+```{r}
+compare_control_nested <- compare_control |>
+  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+compare_control_nested |>
+  slice_sample(n=10)
+```
+
+```{r}
+compare_control_nested <- compare_control_nested |> 
+  mutate(model_object = map(.x = data,
+                   .f = ~lm(formula = log2_counts ~ IFNg_status,
+                            data = .x)))
+```
+
+```{r}
+compare_control_nested <- compare_control_nested |> 
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
+```
+
+```{r}
+estimates_control <- compare_control_nested |> 
+  unnest(model_object_tidy)
+```
+
+```{r}
+estimates_control <- estimates_control |> 
+  filter(term == "IFNg_statusprimed") |> 
+  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
+  ungroup() |> 
+  mutate(q.value = p.adjust(p.value),
+         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
+                          q.value < 0.05 & estimate < -0.59 ~ "down",
+                          TRUE ~ "not significant"))
+```
+
+#### Visualise
+
+**Volcano Plot : Changes in gene expression in control cells when primed with IFNg**
+
+```{r}
+top_genes <- estimates_control |>
+  slice_max(abs(estimate), n = 10) |>
+  pull(gene_id)
+```
+
+```{r}
+estimates_control <- estimates_control |>
+  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
+                           !(gene_id %in% top_genes) ~ "")) 
+```
+
+Plotted with ggplot.
+
+```{r}
+estimates_control |> 
+  ggplot(aes(x = estimate, 
+             y = -log10(p.value), 
+             color = sign,
+             label = top10)) +
+  
+  geom_point(alpha = 0.5, size = 1.2) +
+  
+   geom_text_repel(size = 2,
+                  max.overlaps = 10) +
+  
+  geom_hline(yintercept = 0) +
+  
+  scale_colour_manual(values = c("up" = "brown2",
+                                 "down" = "deepskyblue4",
+                                 "not significant" = "grey70")) +
+  
+  labs(x = "log2 fold change (primed vs naive)",
+       y = "-log10(p)",
+       title = "Effect of IFNγ priming on gene expression in control cells",
+       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
+       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
+  
+  theme_minimal() +
+  
+  theme(
+    legend.position = "none",
+    plot.title.position = "plot",
+    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
+    plot.subtitle = element_text(hjust = 0, size = 11),
+    axis.title = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Seeing the number of genes that are down regulated and up regulated
+
+```{r}
+estimates_control |>
+  count(sign)
 ```
 
 ### 3.

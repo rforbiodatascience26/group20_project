@@ -372,8 +372,42 @@ Group 20
 </section>
 <section id="introduction" class="slide level2">
 <h2>Introduction</h2>
-<p><strong>Paper</strong> :</p>
-<p>Alasoo et al.&nbsp;(2018). Shared genetic effects on chromatin and gene expression indicate a role for enhancer priming in immune response.&nbsp;<em>Nature Genetics</em>,&nbsp;<em>50</em>(3), 424–431</p>
+<p><strong>Reference:</strong> Alasoo et al.&nbsp;(2018). Shared genetic effects on chromatin and gene expression indicate a role for enhancer priming in immune response. <em>Nature Genetics</em>, <em>50</em>(3), 424–431.</p>
+<div class="columns">
+<div class="column" style="width:55%;">
+<p><strong>Dataset &amp; Cohort</strong></p>
+<ul>
+<li><strong>Model:</strong> Human macrophages differentiated from iPSCs (HipSci collection).</li>
+<li><strong>Cohort:</strong> <strong>84</strong> healthy, unrelated donors.</li>
+<li><strong>Dimensions:</strong> <strong>336</strong> total samples (4 per donor) across <strong>35,033</strong> genes.</li>
+<li><strong>Files:</strong> Raw count matrix, CQN-normalized matrix, and sample metadata.</li>
+</ul>
+</div><div class="column" style="width:45%;">
+<p><strong>Experimental Conditions</strong></p>
+<ul>
+<li><strong><code>naive</code>:</strong> Untreated baseline</li>
+<li><strong><code>IFNg</code>:</strong> IFNγ immune priming (18h)</li>
+<li><strong><code>SL1344</code>:</strong> <em>Salmonella</em> infection (5h)</li>
+<li><strong><code>IFNg_SL1344</code>:</strong> Priming + infection</li>
+</ul>
+<p><strong>Project Aim</strong></p>
+<ul>
+<li>Clean the dataset, explore global expression patterns, and identify differentially expressed genes across treatments.</li>
+</ul>
+</div></div>
+<aside class="notes">
+<p>We analyzed the RNA-seq dataset from Alasoo et al.&nbsp;(2018), which uses iPSC-derived macrophages from 84 healthy donors exposed to four conditions: untreated, IFN-gamma priming, Salmonella infection, and both combined. Starting from 336 samples and 35,033 genes, our goal is to clean the data, assess global variance, and identify key differentially expressed genes driving the immune response.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
 <section id="methods" class="slide level2">
 <h2>Methods</h2>
@@ -381,11 +415,32 @@ Group 20
 </section>
 <section id="results" class="slide level2">
 <h2>Results</h2>
-<p>###descriptive plots here###</p>
+<h3 id="description-plots-here">description plots here</h3>
 </section>
 <section id="discussion" class="slide level2">
 <h2>Discussion</h2>
-<p>###analysis here###</p>
+</section>
+<section id="exploratory-analysis-pca" class="slide level2">
+<h2>Exploratory Analysis: PCA</h2>
+<div class="columns">
+<div class="column" style="width:60%;">
+<p>We used <code>factoextra::fviz_pca_ind()</code> to automatically map axis variance and add 95% confidence ellipses.</p>
+<p><img data-src="../results/05_key_plot_1.png" style="width:100.0%"></p>
+</div><div class="column" style="width:40%;">
+<p><strong>Libraries Used</strong></p>
+<ul>
+<li><code>tidyverse</code>: reshaped data (<code>pivot_wider</code>)</li>
+<li><code>stats</code>: computed PCA (<code>prcomp</code>)</li>
+<li><code>factoextra</code> &amp; <code>ggplot2</code>: plotted samples &amp; 95% ellipses</li>
+</ul>
+<p><strong>Plot Interpretation</strong></p>
+<ul>
+<li><strong>4 distinct clusters</strong> matching the experimental conditions.</li>
+<li><strong>PC1 (34.4%)</strong>: separates <em>Salmonella</em>-infected (<code>SL1344</code>) from uninfected samples.</li>
+<li><strong>PC2 (15.3%)</strong>: separates IFNγ-primed from unstimulated cells.</li>
+<li>Biological treatment is the main driver of variation.</li>
+</ul>
+</div></div>
 <div class="quarto-auto-generated-content">
 <div class="footer footer-default">
 <p>R for Bio Data Science 2026 | DTU</p>
