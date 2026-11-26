@@ -531,6 +531,7 @@ estimates_infected |>
     plot.title.position = "plot",
     plot.title = element_text(hjust = 0, size = 14, face = "plain"),
     plot.subtitle = element_text(hjust = 0, size = 11),
+    plot.caption = element_text(hjust = 0, size = 8, color = "gray30"),
     axis.title = element_text(size = 11),
     panel.grid.minor = element_blank()
   )
@@ -642,6 +643,7 @@ estimates_control |>
     plot.title.position = "plot",
     plot.title = element_text(hjust = 0, size = 14, face = "plain"),
     plot.subtitle = element_text(hjust = 0, size = 11),
+    plot.caption = element_text(hjust = 0, size = 8, color = "gray30"),
     axis.title = element_text(size = 11),
     panel.grid.minor = element_blank()
   )

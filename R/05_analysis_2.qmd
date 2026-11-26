@@ -280,6 +280,8 @@ We selected the ten genes with the largest absolute log2 fold change to label th
 top_genes <- estimates_infected |>
   slice_max(abs(estimate), n = 10) |>
   pull(gene_id)
+
+top_genes
 ```
 
 We added a column that holds the gene_id for the ten selected genes and an empty label for all others, so that only those ten are labelled on the plot.
@@ -301,9 +303,9 @@ volcano_plot_infected <- estimates_infected |>
   
   geom_point(alpha = 0.5, size = 1.2) +
   
-   geom_text_repel(size = 2,
-                  max.overlaps = 10,
-                  nudge_x = -1.3, 
+   geom_text_repel(size = 1.8,
+                  max.overlaps = 30,
+                  nudge_x = 1.3, 
                   direction = "y") +
   
   geom_hline(yintercept = 0) +
@@ -325,10 +327,10 @@ volcano_plot_infected <- estimates_infected |>
     plot.title.position = "plot",
     plot.title = element_text(hjust = 0, size = 14, face = "plain"),
     plot.subtitle = element_text(hjust = 0, size = 11),
+    plot.caption = element_text(hjust = 0, size = 8, color = "gray30"),
     axis.title = element_text(size = 11),
     panel.grid.minor = element_blank()
   )
-
 volcano_plot_infected
 ```
 
@@ -341,7 +343,9 @@ estimates_infected |>
 
 ### Control Cells
 
-Now, we do same pipeline we did for infected cells, but for the control samples, filtering only the rows corresponding to the control.
+Although, the analysis and visualization of the differential expression in the control (not infected) cells, when primed or not, was not used, it was used as a support for the overall analysis.
+
+We followed the same pipeline of the analysis of the infected cells, filtering only the rows corresponding to the control.
 
 ```{r}
 compare_control <- merged_data |>
@@ -397,6 +401,8 @@ estimates_control <- estimates_control |>
 top_genes <- estimates_control |>
   slice_max(abs(estimate), n = 10) |>
   pull(gene_id)
+
+top_genes
 ```
 
 ```{r}
@@ -416,8 +422,10 @@ volcano_plot_control <- estimates_control |>
   
   geom_point(alpha = 0.5, size = 1.2) +
   
-   geom_text_repel(size = 2,
-                  max.overlaps = 10) +
+  geom_text_repel(size = 1.8,
+                  max.overlaps = 30,
+                  nudge_x = 2, 
+                  direction = "y") +
   
   geom_hline(yintercept = 0) +
   
@@ -438,12 +446,15 @@ volcano_plot_control <- estimates_control |>
     plot.title.position = "plot",
     plot.title = element_text(hjust = 0, size = 14, face = "plain"),
     plot.subtitle = element_text(hjust = 0, size = 11),
+    plot.caption = element_text(hjust = 0, size = 8, color = "gray30"),
     axis.title = element_text(size = 11),
     panel.grid.minor = element_blank()
   )
 
 volcano_plot_control
 ```
+
+Exporting the resulting plots
 
 ```{r}
 ggsave(
