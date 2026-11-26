@@ -339,11 +339,16 @@
   /* Body text colours */
   .reveal p, .reveal li {
     color: #34495E;
+    font-size: 0.9em;
   }
 
   /* Link colour */
   .reveal a {
     color: #398C89;
+  }
+   /* Columns Spacing*/
+  .reveal .columns {
+    gap: 50px;
   }
 
   /* Footer styling */
@@ -409,9 +414,128 @@ Group 20
           display:block!important;
       }</style></aside>
 </section>
-<section id="methods" class="slide level2">
-<h2>Methods</h2>
-<p>###put the cleaning and the augment explanations here###</p>
+<section id="clean-data" class="slide level2">
+<h2>Clean data</h2>
+<p><strong>Libraries</strong> : <code>tidyverse</code></p>
+<div class="columns">
+<div class="column" style="width:50%;">
+<h3 id="sample-metadata"><strong>Sample</strong> <strong>MetaData</strong></h3>
+<p><strong>Keep relevant and reliable sample metadata</strong></p>
+<ul>
+<li><p><code>select()</code> – Removed irrelevant columns for analysis</p></li>
+<li><p><code>filter()</code> – Removed rows with entirely missing purity information and donors that had unreliable data</p></li>
+<li><p><code>rename()</code> - Renamed columns with unclear or inconsistent names</p></li>
+</ul>
+<p><strong>Cleaned Data</strong></p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 8 × 13
+  sample_id donor condition replicate condition_name SL1344_infection
+  &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;           
+1 coio_B    coio  B                 1 IFNg           control         
+2 oeoo_B    oeoo  B                 1 IFNg           control         
+3 coxy_B    coxy  B                 1 IFNg           control         
+4 iisa_D    iisa  D                 1 IFNg_SL1344    infected        
+5 xucm_A    xucm  A                 1 naive          control         
+6 yemz_D    yemz  D                 1 IFNg_SL1344    infected        
+7 peop_D    peop  D                 1 IFNg_SL1344    infected        
+8 iisa_B    iisa  B                 1 IFNg           control         
+# ℹ 7 more variables: IFNg_status &lt;chr&gt;, received_as &lt;chr&gt;, mean_purity &lt;dbl&gt;,
+#   max_purity &lt;dbl&gt;, sex &lt;chr&gt;, rna_concentration &lt;chr&gt;, purity_bins &lt;chr&gt;</code></pre>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<h3 id="normalised-count-data"><strong>Normalised Count Data</strong></h3>
+<p><strong>Filter low count genes</strong></p>
+<div class="cell" data-fig-width="6" data-fig-height="5" data-layout-align="center">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<svg width="576" height="480" viewbox="0.00 0.00 404.00 392.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 388)">
+<title>G</title>
+<!-- A -->
+<g id="node1" class="node">
+<title>A</title>
+<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="396,-384 0,-384 0,-312 396,-312 396,-384"></polygon>
+<text text-anchor="start" x="134.43" y="-344.2" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Raw counts data</text>
+</g>
+<!-- B -->
+<g id="node2" class="node">
+<title>B</title>
+<polygon fill="#eaf2f8" stroke="#416788" stroke-width="1.5" points="396,-280 0,-280 0,-208 396,-208 396,-280"></polygon>
+<text text-anchor="start" x="146.44" y="-254.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="#243b53">Gene filtering</text>
+<text text-anchor="start" x="95.28" y="-238.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">Only genes with ≥ 10 counts</text>
+<text text-anchor="start" x="89.05" y="-222.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">in ≥ 80 samples were retained</text>
+</g>
+<!-- A&#45;&gt;B -->
+<g id="edge1" class="edge">
+<title>A-&gt;B</title>
+<path fill="none" stroke="#808080" d="M198,-311.9C198,-304.36 198,-296.32 198,-288.51"></path>
+<polygon fill="#808080" stroke="#808080" points="200.8,-288.17 198,-280.17 195.2,-288.17 200.8,-288.17"></polygon>
+</g>
+<!-- C -->
+<g id="node3" class="node">
+<title>C</title>
+<polygon fill="#dceaf5" stroke="#416788" stroke-width="1.5" points="396,-176 0,-176 0,-104 396,-104 396,-176"></polygon>
+<text text-anchor="start" x="141.09" y="-150.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="#243b53">Gene selection</text>
+<text text-anchor="start" x="103.73" y="-134.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">semi_join() retained genes</text>
+<text text-anchor="start" x="112.61" y="-118.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">present in both datasets</text>
+</g>
+<!-- B&#45;&gt;C -->
+<g id="edge2" class="edge">
+<title>B-&gt;C</title>
+<path fill="none" stroke="#808080" d="M198,-207.9C198,-200.36 198,-192.32 198,-184.51"></path>
+<polygon fill="#808080" stroke="#808080" points="200.8,-184.17 198,-176.17 195.2,-184.17 200.8,-184.17"></polygon>
+</g>
+<!-- D -->
+<g id="node4" class="node">
+<title>D</title>
+<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="396,-72 0,-72 0,0 396,0 396,-72"></polygon>
+<text text-anchor="start" x="121.98" y="-38.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Cleaned normalised</text>
+<text text-anchor="start" x="153.11" y="-22.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">counts data</text>
+</g>
+<!-- C&#45;&gt;D -->
+<g id="edge3" class="edge">
+<title>C-&gt;D</title>
+<path fill="none" stroke="#808080" d="M198,-103.9C198,-96.36 198,-88.32 198,-80.51"></path>
+<polygon fill="#808080" stroke="#808080" points="200.8,-80.17 198,-72.17 195.2,-80.17 200.8,-80.17"></polygon>
+</g>
+</g>
+</svg>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div></div>
+<aside class="notes">
+<p><strong>Raw Counts Data</strong></p>
+<ul>
+<li><strong>Function:</strong> <code>filter()</code></li>
+</ul>
+<p>Genes with consistently low read counts were removed to reduce their influence on the analysis: only genes with at least <strong>10 counts</strong> in a minimum of <strong>80 samples</strong> were retained</p>
+<ul>
+<li><strong>Function</strong>: <code>semi_join()</code></li>
+</ul>
+<p>Removed the same genes we filtered in the raw counts, from the normalised data.</p>
+<p><strong>Why use this function?</strong></p>
+<p>It keeps only the rows that appear in the two data sets, without adding any columns from it.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="augment-data" class="slide level2">
+<h2>Augment Data</h2>
 </section>
 <section id="results" class="slide level2">
 <h2>Results</h2>
@@ -441,6 +565,44 @@ Group 20
 <li>Biological treatment is the main driver of variation.</li>
 </ul>
 </div></div>
+</section>
+<section id="differential-expression-analysis-volcano-plot" class="slide level2">
+<h2><strong>Differential Expression Analysis: Volcano Plot</strong></h2>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/05_key_plot_2.1-03.png" class="quarto-figure quarto-figure-left"></p>
+</figure>
+</div>
+</div><div class="columns">
+<div class="column" style="width:40%;">
+<p><strong>Libraries Used</strong></p>
+<ul>
+<li><code>tidyverse</code>:</li>
+<li><code>broom</code> :</li>
+<li><code>ggrepel</code> :</li>
+</ul>
+</div></div>
+</div>
+<aside class="notes">
+<p>To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with “naive” as the first level (set to be the reference).</p>
+<p>Fit a linear model for every gene. We use <code>mutate()</code> together with <code>map()</code>, which applies the same function to each element of data column. The function is <code>lm()</code> with the formula “log2_counts ~ IFNg_status”.</p>
+<p>For each gene, the model estimates the mean expression in naive cells (the intercept) and the difference between primed and naive cells. Since the values are on a log2 scale, this difference is the log2 fold change.</p>
+<p>We used <code>tidy()</code> from broom library to convert each model into a table of estimates, p-values and confidence intervals.</p>
+<p>From the unnested results we kept only the relevant rows and the columns needed for further analysis.</p>
+<p>We do a multiple testing correction, ajusting the p.values using <code>p.adjust()</code>, which gives the q.value. Finally, we used <code>case_when()</code> to classify each gene in a new column: a gene is “up” if q.value &lt; 0.05 and the log2 fold change is above 1 (at least twofold higher in primed cells); “down” if q.value &lt; 0.05 and the log2 fold change is below -1 (at least twofold lower in primed cells), and “not significant” otherwise (q.value &gt;= 0.05) .</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 <div class="quarto-auto-generated-content">
 <div class="footer footer-default">
 <p>R for Bio Data Science 2026 | DTU</p>
@@ -657,6 +819,44 @@ Group 20
         ]
       });
     </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
     <script id="quarto-html-after-body" type="application/javascript">
     window.document.addEventListener("DOMContentLoaded", function (event) {
       const toggleBodyColorMode = (bsSheetEl) => {
