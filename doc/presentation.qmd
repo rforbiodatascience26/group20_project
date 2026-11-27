@@ -134,7 +134,7 @@ clean_sample_meta |>
 digraph G {
   bgcolor="transparent";
   ranksep=0.45;
-  node [shape=box, style=filled, fixedsize=true, width=5.5, height=1.0,
+  node [shape=box, style=filled, fixedsize=true, width=3.2, height=1.0,
         fontname="Helvetica", fontsize=16, penwidth=1.5];
   edge [color="#808080", arrowsize=0.8];
 
@@ -143,14 +143,19 @@ digraph G {
 
   B [label=<<b>Gene filtering</b><br/>Only genes with ≥ 10 counts<br/>in ≥ 80 samples were retained>,
      fillcolor="#EAF2F8", color="#416788", fontcolor="#243B53"];
-
-  C [label=<<b>Gene selection</b><br/>semi_join() retained genes<br/>present in both datasets>,
-     fillcolor="#DCEAF5", color="#416788", fontcolor="#243B53"];
-
-  D [label=<<b>Cleaned normalised</b><br/><b>counts data</b>>,
+    
+  C [label=<<b>Normalised count data</b>>,
      fillcolor="#416788", color="#2F506B", fontcolor="white"];
 
-  A -> B -> C -> D;
+  D [label=<<b>Gene selection</b><br/>semi_join() retained genes<br/>present in both datasets>,
+     fillcolor="#DCEAF5", color="#416788", fontcolor="#243B53"];
+
+  E [label=<<b>Cleaned normalised</b><br/><b>counts data</b>>,
+     fillcolor="#416788", color="#2F506B", fontcolor="white"];
+
+  A -> B -> D;
+  C -> D;
+  D -> E;
 }
 ```
 :::
@@ -192,8 +197,8 @@ We used `factoextra::fviz_pca_ind()` to automatically map axis variance and add 
 ::: {.column width="40%"}
 **Libraries Used**
 
--   `tidyverse`: reshaped data (`pivot_wider`)
--   `stats`: computed PCA (`prcomp`)
+-   `tidyverse`: reshaped data (`pivot_wider()`)
+-   `stats`: computed PCA (`prcomp()`)
 -   `factoextra` & `ggplot2`: plotted samples & 95% ellipses
 
 **Plot Interpretation**
@@ -205,23 +210,88 @@ We used `factoextra::fviz_pca_ind()` to automatically map axis variance and add 
 :::
 :::::
 
-## **Differential Expression Analysis: Volcano Plot**
+## Differential Expression analysis: linear model
 
-:::::: columns
-::: {.column width="60%"}
-![](images/05_key_plot_2.1-03.png){fig-align="left"}
+**Libraries Used :** `tidyverse` , `broom`
+
+::::: columns
+::: {.column width="50%" style="font-size:1em"}
+### **Set up**
+
+``` r
+compare_infected <- merged_data |>
+  filter(SL1344_infection == "infected") |>
+  mutate(IFNg_status = factor(IFNg_status, 
+                              levels = c("naive", "primed")))
+```
+
+-   Only **infected samples** were analysed
+
+-   Compared *naive* vs *primed* cells
+
+### Model per gene
+
+``` r
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object = map(.x = data,
+                            .f = ~lm(formula = log2_counts ~ IFNg_status,
+                            data = .x)))
+```
+
+-   `mutate()` + `map()`, applying `lm()` to every gene : log2_counts \~ IFNg_status
+
+``` r
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~ tidy(.x, 
+                                             conf.int = TRUE, 
+                                             conf.level = 0.9)))
+```
+
+-   `tidy()` turns each model into a table of estimates, p-values and confidence intervals
 :::
 
-:::: columns
-::: {.column width="40%"}
-**Libraries Used**
+::: {.column width="50%"}
+```{dot}
+//| fig-width: 6
+//| fig-height: 5.5
+//| fig-align: center
+digraph G {
+  bgcolor="transparent";
+  ranksep=0.4;
+  nodesep=0.25;
+  node [shape=box, style=filled, fixedsize=true, width=2.0, height=0.9,
+        fontname="Helvetica", fontsize=14, penwidth=1.5];
+  edge [color="#808080", arrowsize=0.8, fontname="Helvetica", fontsize=12];
 
--   `tidyverse`:
--   `broom` :
--   `ggrepel` :
+  A [label=<<b>Estimates</b><br/>p-value and log2FC per gene>,
+     fillcolor="#416788", color="#2F506B", fontcolor="white", width=4.5];
+
+  B [label=<<b>Multiple testing correction</b><br/>p.adjust() gives q-value>,
+     fillcolor="#EAF2F8", color="#416788", fontcolor="#243B53", width=4.5];
+
+  C [label=<<b>Classify each gene</b><br/> case_when() function>,
+     fillcolor="#DCEAF5", color="#416788", fontcolor="#243B53", width=4.5];
+
+  U [label=<<b>up</b><br/>q &lt; 0.05<br/>log2FC &gt; 1>,
+     fillcolor="#EE5C42", color="#CD4F39", fontcolor="white"];
+
+  NS [label=<<b>not significant</b><br/>q ≥ 0.05>,
+     fillcolor="#B3B3B3", color="#8C8C8C", fontcolor="#243B53"];
+
+  D [label=<<b>down</b><br/>q &lt; 0.05<br/>log2FC &lt; -1>,
+     fillcolor="#00688B", color="#004B63", fontcolor="white"];
+
+  A -> B -> C;
+  C -> D;
+  C -> NS;
+  C -> U;
+
+  {rank=same; D; NS; U;}
+}
+```
 :::
-::::
-::::::
+:::::
 
 ::: notes
 To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with "naive" as the first level (set to be the reference).
@@ -234,5 +304,32 @@ We used `tidy()` from broom library to convert each model into a table of estima
 
 From the unnested results we kept only the relevant rows and the columns needed for further analysis.
 
-We do a multiple testing correction, ajusting the p.values using `p.adjust()`, which gives the q.value. Finally, we used `case_when()` to classify each gene in a new column: a gene is "up" if q.value \< 0.05 and the log2 fold change is above 1 (at least twofold higher in primed cells); "down" if q.value \< 0.05 and the log2 fold change is below -1 (at least twofold lower in primed cells), and "not significant" otherwise (q.value \>= 0.05) .
+We do a multiple testing correction, ajusting the p.values using `p.adjust()`, which gives the q.value. Finally, we used `case_when()` to classify each gene in a new column: a gene is "up" if q.value \< 0.05 and the log2 fold change is above 0.59 (at least twofold higher in primed cells); "down" if q.value \< 0.05 and the log2 fold change is below -0.59 (at least twofold lower in primed cells), and "not significant" otherwise (q.value \>= 0.05) .
 :::
+
+## **Differential Expression Analysis: Volcano Plot**
+
+:::::: columns
+::: {.column width="60%"}
+![](images/05_key_plot_2.1-03.png){fig-align="left"}
+:::
+
+:::: columns
+::: {.column width="40%"}
+**Libraries Used**
+
+-   `tidyverse`: selected the top 10 genes (`slice_max()`) and plotted all genes (`ggplot ()`)
+-   `ggrepel`: labelled the top 10 genes (`geom_text_repel()`)
+
+**Plot Interpretation**
+
+-   About **38% of the genes** analysed (5,811 of 15,448) change significantly between primed and naive infected cells.
+
+-   The majority of the genes, about **9,637**, don't show a significant change.
+
+-   The split is almost even: **2,876** genes are **up** and **2,935** are **down.**
+
+-   No down-regulated gene is among the 10 largest fold changes. All 10 are up-regulated, with log2FC of about 7 to 8.
+:::
+::::
+::::::
