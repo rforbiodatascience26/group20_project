@@ -29,6 +29,71 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="presentation_files/libs/revealjs/dist/theme/quarto.css">
   <link href="presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
@@ -432,14 +497,14 @@ Group 20
 <pre><code># A tibble: 8 × 13
   sample_id donor condition replicate condition_name SL1344_infection
   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;           
-1 coio_B    coio  B                 1 IFNg           control         
-2 oeoo_B    oeoo  B                 1 IFNg           control         
-3 coxy_B    coxy  B                 1 IFNg           control         
-4 iisa_D    iisa  D                 1 IFNg_SL1344    infected        
-5 xucm_A    xucm  A                 1 naive          control         
-6 yemz_D    yemz  D                 1 IFNg_SL1344    infected        
-7 peop_D    peop  D                 1 IFNg_SL1344    infected        
-8 iisa_B    iisa  B                 1 IFNg           control         
+1 yemz_B    yemz  B                 1 IFNg           control         
+2 eiwy_D    eiwy  D                 1 IFNg_SL1344    infected        
+3 meqo_C    meqo  C                 1 SL1344         infected        
+4 eika_C    eika  C                 1 SL1344         infected        
+5 eiwy_B    eiwy  B                 1 IFNg           control         
+6 sojd_C    sojd  C                 1 SL1344         infected        
+7 coyi_A    coyi  A                 1 naive          control         
+8 oomz_D    oomz  D                 1 IFNg_SL1344    infected        
 # ℹ 7 more variables: IFNg_status &lt;chr&gt;, received_as &lt;chr&gt;, mean_purity &lt;dbl&gt;,
 #   max_purity &lt;dbl&gt;, sex &lt;chr&gt;, rna_concentration &lt;chr&gt;, purity_bins &lt;chr&gt;</code></pre>
 </div>
@@ -452,55 +517,67 @@ Group 20
 <div>
 <p></p><figure class=""><p></p>
 <div>
-<svg width="576" height="480" viewbox="0.00 0.00 404.00 392.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<svg width="576" height="480" viewbox="0.00 0.00 486.00 392.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 388)">
 <title>G</title>
 <!-- A -->
 <g id="node1" class="node">
 <title>A</title>
-<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="396,-384 0,-384 0,-312 396,-312 396,-384"></polygon>
-<text text-anchor="start" x="134.43" y="-344.2" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Raw counts data</text>
+<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="230,-384 0,-384 0,-312 230,-312 230,-384"></polygon>
+<text text-anchor="start" x="51.43" y="-344.2" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Raw counts data</text>
 </g>
 <!-- B -->
 <g id="node2" class="node">
 <title>B</title>
-<polygon fill="#eaf2f8" stroke="#416788" stroke-width="1.5" points="396,-280 0,-280 0,-208 396,-208 396,-280"></polygon>
-<text text-anchor="start" x="146.44" y="-254.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="#243b53">Gene filtering</text>
-<text text-anchor="start" x="95.28" y="-238.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">Only genes with ≥ 10 counts</text>
-<text text-anchor="start" x="89.05" y="-222.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">in ≥ 80 samples were retained</text>
+<polygon fill="#eaf2f8" stroke="#416788" stroke-width="1.5" points="230,-280 0,-280 0,-208 230,-208 230,-280"></polygon>
+<text text-anchor="start" x="63.44" y="-254.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="#243b53">Gene filtering</text>
+<text text-anchor="start" x="12.28" y="-238.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">Only genes with ≥ 10 counts</text>
+<text text-anchor="start" x="6.05" y="-222.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">in ≥ 80 samples were retained</text>
 </g>
 <!-- A&#45;&gt;B -->
 <g id="edge1" class="edge">
 <title>A-&gt;B</title>
-<path fill="none" stroke="#808080" d="M198,-311.9C198,-304.36 198,-296.32 198,-288.51"></path>
-<polygon fill="#808080" stroke="#808080" points="200.8,-288.17 198,-280.17 195.2,-288.17 200.8,-288.17"></polygon>
-</g>
-<!-- C -->
-<g id="node3" class="node">
-<title>C</title>
-<polygon fill="#dceaf5" stroke="#416788" stroke-width="1.5" points="396,-176 0,-176 0,-104 396,-104 396,-176"></polygon>
-<text text-anchor="start" x="141.09" y="-150.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="#243b53">Gene selection</text>
-<text text-anchor="start" x="103.73" y="-134.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">semi_join() retained genes</text>
-<text text-anchor="start" x="112.61" y="-118.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">present in both datasets</text>
-</g>
-<!-- B&#45;&gt;C -->
-<g id="edge2" class="edge">
-<title>B-&gt;C</title>
-<path fill="none" stroke="#808080" d="M198,-207.9C198,-200.36 198,-192.32 198,-184.51"></path>
-<polygon fill="#808080" stroke="#808080" points="200.8,-184.17 198,-176.17 195.2,-184.17 200.8,-184.17"></polygon>
+<path fill="none" stroke="#808080" d="M115,-311.9C115,-304.36 115,-296.32 115,-288.51"></path>
+<polygon fill="#808080" stroke="#808080" points="117.8,-288.17 115,-280.17 112.2,-288.17 117.8,-288.17"></polygon>
 </g>
 <!-- D -->
 <g id="node4" class="node">
 <title>D</title>
-<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="396,-72 0,-72 0,0 396,0 396,-72"></polygon>
-<text text-anchor="start" x="121.98" y="-38.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Cleaned normalised</text>
-<text text-anchor="start" x="153.11" y="-22.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">counts data</text>
+<polygon fill="#dceaf5" stroke="#416788" stroke-width="1.5" points="354,-176 124,-176 124,-104 354,-104 354,-176"></polygon>
+<text text-anchor="start" x="182.09" y="-150.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="#243b53">Gene selection</text>
+<text text-anchor="start" x="144.73" y="-134.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">semi_join() retained genes</text>
+<text text-anchor="start" x="153.61" y="-118.6" font-family="Helvetica,sans-Serif" font-size="16.00" fill="#243b53">present in both datasets</text>
+</g>
+<!-- B&#45;&gt;D -->
+<g id="edge2" class="edge">
+<title>B-&gt;D</title>
+<path fill="none" stroke="#808080" d="M157.67,-207.9C168.1,-199.32 179.33,-190.08 190.02,-181.29"></path>
+<polygon fill="#808080" stroke="#808080" points="191.85,-183.41 196.25,-176.17 188.29,-179.09 191.85,-183.41"></polygon>
+</g>
+<!-- C -->
+<g id="node3" class="node">
+<title>C</title>
+<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="478,-280 248,-280 248,-208 478,-208 478,-280"></polygon>
+<text text-anchor="start" x="276.76" y="-240.2" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Normalised count data</text>
 </g>
 <!-- C&#45;&gt;D -->
 <g id="edge3" class="edge">
 <title>C-&gt;D</title>
-<path fill="none" stroke="#808080" d="M198,-103.9C198,-96.36 198,-88.32 198,-80.51"></path>
-<polygon fill="#808080" stroke="#808080" points="200.8,-80.17 198,-72.17 195.2,-80.17 200.8,-80.17"></polygon>
+<path fill="none" stroke="#808080" d="M320.33,-207.9C309.9,-199.32 298.67,-190.08 287.98,-181.29"></path>
+<polygon fill="#808080" stroke="#808080" points="289.71,-179.09 281.75,-176.17 286.15,-183.41 289.71,-179.09"></polygon>
+</g>
+<!-- E -->
+<g id="node5" class="node">
+<title>E</title>
+<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="354,-72 124,-72 124,0 354,0 354,-72"></polygon>
+<text text-anchor="start" x="162.98" y="-38.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">Cleaned normalised</text>
+<text text-anchor="start" x="194.11" y="-22.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="16.00" fill="white">counts data</text>
+</g>
+<!-- D&#45;&gt;E -->
+<g id="edge4" class="edge">
+<title>D-&gt;E</title>
+<path fill="none" stroke="#808080" d="M239,-103.9C239,-96.36 239,-88.32 239,-80.51"></path>
+<polygon fill="#808080" stroke="#808080" points="241.8,-80.17 239,-72.17 236.2,-80.17 241.8,-80.17"></polygon>
 </g>
 </g>
 </svg>
@@ -553,8 +630,8 @@ Group 20
 </div><div class="column" style="width:40%;">
 <p><strong>Libraries Used</strong></p>
 <ul>
-<li><code>tidyverse</code>: reshaped data (<code>pivot_wider</code>)</li>
-<li><code>stats</code>: computed PCA (<code>prcomp</code>)</li>
+<li><code>tidyverse</code>: reshaped data (<code>pivot_wider()</code>)</li>
+<li><code>stats</code>: computed PCA (<code>prcomp()</code>)</li>
 <li><code>factoextra</code> &amp; <code>ggplot2</code>: plotted samples &amp; 95% ellipses</li>
 </ul>
 <p><strong>Plot Interpretation</strong></p>
@@ -565,6 +642,146 @@ Group 20
 <li>Biological treatment is the main driver of variation.</li>
 </ul>
 </div></div>
+</section>
+<section id="differential-expression-analysis-linear-model" class="slide level2">
+<h2>Differential Expression analysis: linear model</h2>
+<p><strong>Libraries Used :</strong> <code>tidyverse</code> , <code>broom</code></p>
+<div class="columns">
+<div class="column" style="font-size:1em">
+<h3 id="set-up"><strong>Set up</strong></h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a>compare_infected <span class="ot">&lt;-</span> merged_data <span class="sc">|&gt;</span></span>
+<span id="cb2-2"><a href=""></a>  <span class="fu">filter</span>(SL1344_infection <span class="sc">==</span> <span class="st">"infected"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-3"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">IFNg_status =</span> <span class="fu">factor</span>(IFNg_status, </span>
+<span id="cb2-4"><a href=""></a>                              <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"naive"</span>, <span class="st">"primed"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li><p>Only <strong>infected samples</strong> were analysed</p></li>
+<li><p>Compared <em>naive</em> vs <em>primed</em> cells</p></li>
+</ul>
+<h3 id="model-per-gene">Model per gene</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a>compare_infected_nested <span class="ot">&lt;-</span> compare_infected_nested <span class="sc">|&gt;</span> </span>
+<span id="cb3-2"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">model_object =</span> <span class="fu">map</span>(<span class="at">.x =</span> data,</span>
+<span id="cb3-3"><a href=""></a>                            <span class="at">.f =</span> <span class="sc">~</span><span class="fu">lm</span>(<span class="at">formula =</span> log2_counts <span class="sc">~</span> IFNg_status,</span>
+<span id="cb3-4"><a href=""></a>                            <span class="at">data =</span> .x)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li><code>mutate()</code> + <code>map()</code>, applying <code>lm()</code> to every gene : log2_counts ~ IFNg_status</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a>compare_infected_nested <span class="ot">&lt;-</span> compare_infected_nested <span class="sc">|&gt;</span> </span>
+<span id="cb4-2"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">model_object_tidy =</span> <span class="fu">map</span>(<span class="at">.x =</span> model_object,</span>
+<span id="cb4-3"><a href=""></a>                                 <span class="at">.f =</span> <span class="sc">~</span> <span class="fu">tidy</span>(.x, </span>
+<span id="cb4-4"><a href=""></a>                                             <span class="at">conf.int =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb4-5"><a href=""></a>                                             <span class="at">conf.level =</span> <span class="fl">0.9</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li><code>tidy()</code> turns each model into a table of estimates, p-values and confidence intervals</li>
+</ul>
+</div><div class="column" style="width:50%;">
+<div class="cell" data-fig-width="6" data-fig-height="5.5" data-layout-align="center">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<svg width="576" height="528" viewbox="0.00 0.00 476.00 355.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 351)">
+<title>G</title>
+<!-- A -->
+<g id="node1" class="node">
+<title>A</title>
+<polygon fill="#416788" stroke="#2f506b" stroke-width="1.5" points="396,-347 72,-347 72,-282 396,-282 396,-347"></polygon>
+<text text-anchor="start" x="200.93" y="-316.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="14.00" fill="white">Estimates</text>
+<text text-anchor="start" x="143.33" y="-302.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="white">p-value and log2FC per gene</text>
+</g>
+<!-- B -->
+<g id="node2" class="node">
+<title>B</title>
+<polygon fill="#eaf2f8" stroke="#416788" stroke-width="1.5" points="396,-253 72,-253 72,-188 396,-188 396,-253"></polygon>
+<text text-anchor="start" x="146.49" y="-222.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="14.00" fill="#243b53">Multiple testing correction</text>
+<text text-anchor="start" x="161.63" y="-208.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#243b53">p.adjust() gives q-value</text>
+</g>
+<!-- A&#45;&gt;B -->
+<g id="edge1" class="edge">
+<title>A-&gt;B</title>
+<path fill="none" stroke="#808080" d="M234,-281.84C234,-275.33 234,-268.4 234,-261.64"></path>
+<polygon fill="#808080" stroke="#808080" points="236.8,-261.22 234,-253.22 231.2,-261.22 236.8,-261.22"></polygon>
+</g>
+<!-- C -->
+<g id="node3" class="node">
+<title>C</title>
+<polygon fill="#dceaf5" stroke="#416788" stroke-width="1.5" points="396,-159 72,-159 72,-94 396,-94 396,-159"></polygon>
+<text text-anchor="start" x="170.97" y="-128.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="14.00" fill="#243b53">Classify each gene</text>
+<text text-anchor="start" x="165.52" y="-114.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#243b53"> case_when() function</text>
+</g>
+<!-- B&#45;&gt;C -->
+<g id="edge2" class="edge">
+<title>B-&gt;C</title>
+<path fill="none" stroke="#808080" d="M234,-187.84C234,-181.33 234,-174.4 234,-167.64"></path>
+<polygon fill="#808080" stroke="#808080" points="236.8,-167.22 234,-159.22 231.2,-167.22 236.8,-167.22"></polygon>
+</g>
+<!-- U -->
+<g id="node4" class="node">
+<title>U</title>
+<polygon fill="#ee5c42" stroke="#cd4f39" stroke-width="1.5" points="144,-65 0,-65 0,0 144,0 144,-65"></polygon>
+<text text-anchor="start" x="63.45" y="-41.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="14.00" fill="white">up</text>
+<text text-anchor="start" x="46.51" y="-27.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="white">q &lt; 0.05</text>
+<text text-anchor="start" x="37.56" y="-13.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="white">log2FC &gt; 1</text>
+</g>
+<!-- C&#45;&gt;U -->
+<g id="edge5" class="edge">
+<title>C-&gt;U</title>
+<path fill="none" stroke="#808080" d="M178.25,-93.84C164.17,-85.84 148.96,-77.21 134.57,-69.03"></path>
+<polygon fill="#808080" stroke="#808080" points="135.92,-66.58 127.58,-65.06 133.15,-71.45 135.92,-66.58"></polygon>
+</g>
+<!-- NS -->
+<g id="node5" class="node">
+<title>NS</title>
+<polygon fill="#b3b3b3" stroke="#8c8c8c" stroke-width="1.5" points="306,-65 162,-65 162,0 306,0 306,-65"></polygon>
+<text text-anchor="start" x="186.17" y="-34.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="14.00" fill="#243b53">not significant</text>
+<text text-anchor="start" x="206.76" y="-20.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="#243b53">q ≥ 0.05</text>
+</g>
+<!-- C&#45;&gt;NS -->
+<g id="edge4" class="edge">
+<title>C-&gt;NS</title>
+<path fill="none" stroke="#808080" d="M234,-93.84C234,-87.33 234,-80.4 234,-73.64"></path>
+<polygon fill="#808080" stroke="#808080" points="236.8,-73.22 234,-65.22 231.2,-73.22 236.8,-73.22"></polygon>
+</g>
+<!-- D -->
+<g id="node6" class="node">
+<title>D</title>
+<polygon fill="#00688b" stroke="#004b63" stroke-width="1.5" points="468,-65 324,-65 324,0 468,0 468,-65"></polygon>
+<text text-anchor="start" x="377.73" y="-41.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="14.00" fill="white">down</text>
+<text text-anchor="start" x="370.51" y="-27.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="white">q &lt; 0.05</text>
+<text text-anchor="start" x="359.23" y="-13.9" font-family="Helvetica,sans-Serif" font-size="14.00" fill="white">log2FC &lt; -1</text>
+</g>
+<!-- C&#45;&gt;D -->
+<g id="edge3" class="edge">
+<title>C-&gt;D</title>
+<path fill="none" stroke="#808080" d="M289.75,-93.84C303.83,-85.84 319.04,-77.21 333.43,-69.03"></path>
+<polygon fill="#808080" stroke="#808080" points="334.85,-71.45 340.42,-65.06 332.08,-66.58 334.85,-71.45"></polygon>
+</g>
+</g>
+</svg>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</div></div>
+<aside class="notes">
+<p>To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with “naive” as the first level (set to be the reference).</p>
+<p>Fit a linear model for every gene. We use <code>mutate()</code> together with <code>map()</code>, which applies the same function to each element of data column. The function is <code>lm()</code> with the formula “log2_counts ~ IFNg_status”.</p>
+<p>For each gene, the model estimates the mean expression in naive cells (the intercept) and the difference between primed and naive cells. Since the values are on a log2 scale, this difference is the log2 fold change.</p>
+<p>We used <code>tidy()</code> from broom library to convert each model into a table of estimates, p-values and confidence intervals.</p>
+<p>From the unnested results we kept only the relevant rows and the columns needed for further analysis.</p>
+<p>We do a multiple testing correction, ajusting the p.values using <code>p.adjust()</code>, which gives the q.value. Finally, we used <code>case_when()</code> to classify each gene in a new column: a gene is “up” if q.value &lt; 0.05 and the log2 fold change is above 0.59 (at least twofold higher in primed cells); “down” if q.value &lt; 0.05 and the log2 fold change is below -0.59 (at least twofold lower in primed cells), and “not significant” otherwise (q.value &gt;= 0.05) .</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
 </section>
 <section id="differential-expression-analysis-volcano-plot" class="slide level2">
 <h2><strong>Differential Expression Analysis: Volcano Plot</strong></h2>
@@ -579,30 +796,18 @@ Group 20
 <div class="column" style="width:40%;">
 <p><strong>Libraries Used</strong></p>
 <ul>
-<li><code>tidyverse</code>:</li>
-<li><code>broom</code> :</li>
-<li><code>ggrepel</code> :</li>
+<li><code>tidyverse</code>: selected the top 10 genes (<code>slice_max()</code>) and plotted all genes (<code>ggplot ()</code>)</li>
+<li><code>ggrepel</code>: labelled the top 10 genes (<code>geom_text_repel()</code>)</li>
+</ul>
+<p><strong>Plot Interpretation</strong></p>
+<ul>
+<li><p>About <strong>38% of the genes</strong> analysed (5,811 of 15,448) change significantly between primed and naive infected cells.</p></li>
+<li><p>The majority of the genes, about <strong>9,637</strong>, don’t show a significant change.</p></li>
+<li><p>The split is almost even: <strong>2,876</strong> genes are <strong>up</strong> and <strong>2,935</strong> are <strong>down.</strong></p></li>
+<li><p>No down-regulated gene is among the 10 largest fold changes. All 10 are up-regulated, with log2FC of about 7 to 8.</p></li>
 </ul>
 </div></div>
 </div>
-<aside class="notes">
-<p>To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with “naive” as the first level (set to be the reference).</p>
-<p>Fit a linear model for every gene. We use <code>mutate()</code> together with <code>map()</code>, which applies the same function to each element of data column. The function is <code>lm()</code> with the formula “log2_counts ~ IFNg_status”.</p>
-<p>For each gene, the model estimates the mean expression in naive cells (the intercept) and the difference between primed and naive cells. Since the values are on a log2 scale, this difference is the log2 fold change.</p>
-<p>We used <code>tidy()</code> from broom library to convert each model into a table of estimates, p-values and confidence intervals.</p>
-<p>From the unnested results we kept only the relevant rows and the columns needed for further analysis.</p>
-<p>We do a multiple testing correction, ajusting the p.values using <code>p.adjust()</code>, which gives the q.value. Finally, we used <code>case_when()</code> to classify each gene in a new column: a gene is “up” if q.value &lt; 0.05 and the log2 fold change is above 1 (at least twofold higher in primed cells); “down” if q.value &lt; 0.05 and the log2 fold change is below -1 (at least twofold lower in primed cells), and “not significant” otherwise (q.value &gt;= 0.05) .</p>
-<style type="text/css">
-        span.MJX_Assistive_MathML {
-          position:absolute!important;
-          clip: rect(1px, 1px, 1px, 1px);
-          padding: 1px 0 0 0!important;
-          border: 0!important;
-          height: 1px!important;
-          width: 1px!important;
-          overflow: hidden!important;
-          display:block!important;
-      }</style></aside>
 <div class="quarto-auto-generated-content">
 <div class="footer footer-default">
 <p>R for Bio Data Science 2026 | DTU</p>
