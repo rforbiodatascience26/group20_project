@@ -9,9 +9,7 @@ editor: visual
 ```{r}
 library("tidyverse")
 library("broom")
-library("ggrepel")
 library("ggridges")
-library("viridis")
 ```
 
 ## Load Data
@@ -208,7 +206,7 @@ write_tsv(x = merged_data, file = "../data/02_aug_data.tsv")
 
 ## Analysis of Data
 
-### Infected Cells 
+### Infected Cells
 
 **Note:** This is the same pipeline used in *05_analysis_1.qmd*, but only for the **infected cells**.
 
@@ -303,7 +301,7 @@ plot_data <- merged_data |>
                             levels = c("IFNg_SL1344", "IFNg", "SL1344", "naive"))
   )
 
-ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) +
+ridgeplot <- ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) +
   geom_density_ridges(alpha = 0.75, quantile_lines = TRUE, quantiles = 2) +
   facet_wrap(~ direction) +
   scale_fill_manual(values = c(naive = "#E8C547", primed = "#5B2A86"),
@@ -314,6 +312,8 @@ ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) 
        x = expression(log[2]~"counts"), 
        y = NULL) +
   theme_minimal()
+
+ridgeplot
 ```
 
 **Upregulated genes (right panel)**
@@ -332,3 +332,15 @@ ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) 
 
 **Conclusion**\
 IFNγ priming is the main driver of the expression changes. The primed conditions separate from the unprimed ones in both panels, and infection with SL1344 alone does little. The effect is strong for induced genes and subtle for repressed ones.
+
+Exporting plot results
+
+```{r}
+ggsave(
+  filename = "../results/05_key_plot_3.png",
+  plot     = ridgeplot,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
+```

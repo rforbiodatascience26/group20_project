@@ -497,14 +497,14 @@ Group 20
 <pre><code># A tibble: 8 × 13
   sample_id donor condition replicate condition_name SL1344_infection
   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;          &lt;chr&gt;           
-1 eiwy_B    eiwy  B                 1 IFNg           control         
-2 eika_D    eika  D                 1 IFNg_SL1344    infected        
-3 gomv_A    gomv  A                 1 naive          control         
-4 kaks_D    kaks  D                 1 IFNg_SL1344    infected        
-5 hehd_D    hehd  D                 1 IFNg_SL1344    infected        
-6 darw_D    darw  D                 1 IFNg_SL1344    infected        
-7 ruyv_C    ruyv  C                 1 SL1344         infected        
-8 auim_B    auim  B                 1 IFNg           control         
+1 iicq_B    iicq  B                 1 IFNg           control         
+2 guss_C    guss  C                 1 SL1344         infected        
+3 uimo_D    uimo  D                 1 IFNg_SL1344    infected        
+4 fikt_D    fikt  D                 1 IFNg_SL1344    infected        
+5 oarz_D_2  oarz  D                 2 IFNg_SL1344    infected        
+6 veqz_B    veqz  B                 1 IFNg           control         
+7 pelm_C    pelm  C                 1 SL1344         infected        
+8 giuo_C    giuo  C                 1 SL1344         infected        
 # ℹ 7 more variables: IFNg_status &lt;chr&gt;, received_as &lt;chr&gt;, mean_purity &lt;dbl&gt;,
 #   max_purity &lt;dbl&gt;, sex &lt;chr&gt;, rna_concentration &lt;chr&gt;, purity_bins &lt;chr&gt;</code></pre>
 </div>
@@ -810,6 +810,33 @@ Group 20
 <li><p>The majority of the genes, about <strong>9,637</strong>, don’t show a significant change.</p></li>
 <li><p>The split is almost even: <strong>2,876</strong> genes are <strong>up</strong> and <strong>2,935</strong> are <strong>down.</strong></p></li>
 <li><p>No down-regulated gene is among the 10 largest fold changes. All 10 are up-regulated, with log2FC of about 7 to 8.</p></li>
+</ul>
+</div></div>
+</div>
+</section>
+<section id="differential-expression-analysis-ridge-plot" class="slide level2">
+<h2><strong>Differential Expression Analysis: Ridge Plot</strong></h2>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-left">
+<figure>
+<p><img data-src="images/05_key_plot_3.png" class="quarto-figure quarto-figure-left"></p>
+</figure>
+</div>
+<p><strong>Main takeaway</strong> - <code>IFNγ</code> priming <strong>strongly</strong> induces target genes and more subtly represses others, with infection alone having minimal impact.</p>
+</div><div class="columns">
+<div class="column" style="width:40%;">
+<p><strong>Libraries Used</strong></p>
+<ul>
+<li><code>tidyverse</code>: selected the top 30 genes (<code>slice_max()</code>) and plotted all genes (<code>ggplot ()</code>)</li>
+<li><code>ggridges</code>: used to build the ridgeline plot (<code>geom_density_ridges()</code>)</li>
+</ul>
+<p><strong>Plot Interpretation</strong></p>
+<ul>
+<li><p>Across both panels, priming with <code>IFNγ</code> is the primary factor changing gene expression.</p></li>
+<li><p>Expression starts low in unprimed conditions (medians around <em>-2</em>) and increases <strong>substantially</strong> upon priming, especially in <code>IFNg_SL1344</code>.</p></li>
+<li><p><code>IFNg_SL1344</code> trends slightly higher than <code>IFNg</code> alone, and a small left-side bump in the <code>IFNg</code>-only ridge suggests some genes respond more weakly without infection.</p></li>
+<li><p>Repressed genes move in the <em>opposite</em> direction with a smaller shift and substantial overlap across conditions, reflecting moderate-to-high baseline expression and a weaker effect than upregulation.</p></li>
 </ul>
 </div></div>
 </div>

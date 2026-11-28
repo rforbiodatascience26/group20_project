@@ -338,3 +338,33 @@ We do a multiple testing correction, ajusting the p.values using `p.adjust()`, w
 :::
 ::::
 ::::::
+
+## **Differential Expression Analysis: Ridge Plot**
+
+:::::: columns
+::: {.column width="60%"}
+![](images/05_key_plot_3.png){fig-align="left"}
+
+**Main takeaway**
+- `IFNγ` priming **strongly** induces target genes and more subtly represses others, with infection alone having minimal impact.
+:::
+
+:::: columns
+::: {.column width="40%"}
+**Libraries Used**
+
+-   `tidyverse`: selected the top 30 genes (`slice_max()`) and plotted all genes (`ggplot ()`)
+-   `ggridges`: used to build the ridgeline plot (`geom_density_ridges()`)
+
+**Plot Interpretation**
+
+-   Across both panels, priming with `IFNγ` is the primary factor changing gene expression.
+
+-   Expression starts low in unprimed conditions (medians around *-2*) and increases **substantially** upon priming, especially in `IFNg_SL1344`.
+
+-   `IFNg_SL1344` trends slightly higher than `IFNg` alone, and a small left-side bump in the `IFNg`-only ridge suggests some genes respond more weakly without infection.
+
+-   Repressed genes move in the *opposite* direction with a smaller shift and substantial overlap across conditions, reflecting moderate-to-high baseline expression and a weaker effect than upregulation.
+:::
+::::
+::::::
