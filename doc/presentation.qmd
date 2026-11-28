@@ -181,7 +181,12 @@ It keeps only the rows that appear in the two data sets, without adding any colu
 
 ## Results
 
-### description plots here
+### Gene expression differences from naïve
+
+![](../results/04_key_plot_1.png){width="76%" fig-align="center"}
+
+- All three distributions peaked near zero.
+- The IFNg-only condition had the narrowest peak. The combined IFNg and SL1344 condition showed the widest spread around its peak.
 
 ## Discussion
 
