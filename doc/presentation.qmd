@@ -53,9 +53,37 @@ editor: visual
 
 ## Introduction
 
-**Paper** :
+**Reference:** Alasoo et al. (2018). Shared genetic effects on chromatin and gene expression indicate a role for enhancer priming in immune response. *Nature Genetics*, *50*(3), 424–431.
 
-Alasoo et al. (2018). Shared genetic effects on chromatin and gene expression indicate a role for enhancer priming in immune response. *Nature Genetics*, *50*(3), 424–431
+:::: {.columns}
+
+::: {.column width="55%"}
+**Dataset & Cohort**
+
+- **Model:** Human macrophages differentiated from iPSCs (HipSci collection).
+- **Cohort:** **84** healthy, unrelated donors.
+- **Dimensions:** **336** total samples (4 per donor) across **35,033** genes.
+- **Files:** Raw count matrix, CQN-normalized matrix, and sample metadata.
+:::
+
+::: {.column width="45%"}
+**Experimental Conditions**
+
+- **`naive`:** Untreated baseline
+- **`IFNg`:** IFNγ immune priming (18h)
+- **`SL1344`:** *Salmonella* infection (5h)
+- **`IFNg_SL1344`:** Priming + infection
+
+**Project Aim**
+
+- Clean the dataset, explore global expression patterns, and identify differentially expressed genes across treatments.
+:::
+
+::::
+
+::: {.notes}
+We analyzed the RNA-seq dataset from Alasoo et al. (2018), which uses iPSC-derived macrophages from 84 healthy donors exposed to four conditions: untreated, IFN-gamma priming, Salmonella infection, and both combined. Starting from 336 samples and 35,033 genes, our goal is to clean the data, assess global variance, and identify key differentially expressed genes driving the immune response.
+:::
 
 ## Methods
 
@@ -63,8 +91,33 @@ Alasoo et al. (2018). Shared genetic effects on chromatin and gene expression in
 
 ## Results
 
-###descriptive plots here###
+### description plots here ###
 
 ## Discussion
 
-###analysis here###
+## Exploratory Analysis: PCA
+
+:::: {.columns}
+
+::: {.column width="60%"}
+We used `factoextra::fviz_pca_ind()` to automatically map axis variance and add 95% confidence ellipses.
+
+![](../results/05_key_plot_1.png){width="100%"}
+:::
+
+::: {.column width="40%"}
+**Libraries Used**
+
+- `tidyverse`: reshaped data (`pivot_wider`)
+- `stats`: computed PCA (`prcomp`)
+- `factoextra` & `ggplot2`: plotted samples & 95% ellipses
+
+**Plot Interpretation**
+
+- **4 distinct clusters** matching the experimental conditions.
+- **PC1 (34.4%)**: separates *Salmonella*-infected (`SL1344`) from uninfected samples.
+- **PC2 (15.3%)**: separates IFNγ-primed from unstimulated cells.
+- Biological treatment is the main driver of variation.
+:::
+
+::::

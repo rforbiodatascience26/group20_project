@@ -1,0 +1,464 @@
+---
+title: "05_analysis_2.qmd"
+format: html
+editor: visual
+---
+
+## Load Libraries
+
+```{r}
+library("tidyverse")
+library("broom")
+library("ggrepel")
+```
+
+## Load Data
+
+```{r}
+#| eval: false
+
+dir.create("../data/_raw", recursive = TRUE, showWarnings = FALSE)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_cqn_matrix.txt.gz?download=1",
+  destfile = "../data/_raw/RNA_cqn_matrix.txt.gz",
+  mode     = "wb"
+)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_sample_metadata.txt.gz?download=1",
+  destfile = "../data/_raw/RNA_sample_metadata.txt.gz",
+  mode     = "wb"
+)
+
+download.file(
+  url      = "https://zenodo.org/records/259661/files/RNA_count_matrix.txt.gz?download=1",
+  destfile = "../data/_raw/RNA_count_matrix.txt.gz",
+  mode     = "wb"
+)
+```
+
+```{r}
+
+# sample meta data
+sample_meta <- read_tsv("../data/_raw/RNA_sample_metadata.txt.gz", show_col_types = FALSE)
+write_tsv(x = sample_meta, file = "../data/01_sample_meta_load.tsv")
+
+# counts raw data
+counts_raw_df <- read.delim("../data/_raw/RNA_count_matrix.txt.gz", check.names = FALSE) |>
+  as_tibble(rownames = "gene_id")
+write_tsv(x = counts_raw_df, file = "../data/01_counts_raw_df_load.tsv")
+
+# counts data normalized
+counts_norm_df <- read.delim("../data/_raw/RNA_cqn_matrix.txt.gz", check.names = FALSE) |>
+  as_tibble(rownames = "gene_id")
+write_tsv(x = counts_norm_df, file = "../data/01_counts_norm_df_load.tsv")
+```
+
+## Clean Data
+
+### Sample metadata
+
+#### Selection of relevant columns
+
+```{r}
+clean_sample_meta <- sample_meta |>
+  select(c("sample_id","donor","condition","replicate","condition_name","SL1344","IFNg"                  ,"received_as","mean_purity","max_purity", "sex","rna_concentration"                           ,"purity_bins"
+  ))
+clean_sample_meta |>
+  slice_sample(n = 10)
+```
+
+#### Dealing with NAs
+
+Checking which columns contain values at NAs
+
+```{r}
+clean_sample_meta |>
+  summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+All missing values were identified in columns related to sample purity. Before deciding how to handle these missing values, we investigated whether their occurrence followed any pattern. For example, if missing values were associated with specific donors, experimental conditions or other sample characteristics.
+
+```{r}
+clean_sample_meta |> 
+  filter(if_any(contains("purity"), is.na))
+```
+
+The NAs are grouped by donor, so the decision was taken to only delete the rows related to the donors that have no data in all columns of purity (filtering with the function `if_all()`) in their samples. This way, we make sure that further analysis is made on reliable data.
+
+```{r}
+clean_sample_meta <- clean_sample_meta|>
+  filter(!if_all(contains("purity"), is.na))
+
+clean_sample_meta|>
+  slice_sample(n=10)
+```
+
+#### Fixing columns naming
+
+Two columns had names that were not intuitive or consistent: "SL1344", which indicates whether a sample is a control or was infected with *Salmonella*, and "IFNg", which indicates whether a sample was exposed to IFNγ (primed) or not (naive). To make the dataset easier to understand and keep the naming consistent, these columns were renamed.
+
+```{r}
+clean_sample_meta <- clean_sample_meta |>
+  rename( 
+    SL1344_infection = SL1344,
+    IFNg_status = IFNg)
+
+clean_sample_meta|>
+  slice_sample(n=10)
+```
+
+#### Filter odd data
+
+One more inconsistency was observed. In the column "received_as" we have samples that have the value of "alive/frozen".
+
+First, we investigate how many do we have with this characteristic
+
+```{r}
+clean_sample_meta |>
+  filter(received_as == "alive/frozen")
+```
+
+As we can see from the output, the samples that was received as alive/frozen are from only one donor. For consistency purposes, we decide to also remove the data from this donor.
+
+```{r}
+clean_sample_meta <- clean_sample_meta |>
+ filter(!received_as == "alive/frozen")
+```
+
+### Normalised Counts data
+
+#### Filter low count genes
+
+The authors of the original paper did not filter low-count genes before normalisation (nor do they mention such action), so we used the raw counts to identify them. Genes with consistently low read counts were removed to reduce their influence on the analysis: only genes with at least 10 counts in a minimum of 80 samples were retained
+
+```{r}
+clean_counts_raw_df <- counts_raw_df |>
+  filter(rowSums(across(-1) >= 10) >= 80)
+```
+
+We use `semi_join()` to remove the same genes from the normalised data. This function keeps only the rows of counts_norm whose gene_id also appears in the filtered raw data, without adding any columns from it.
+
+```{r}
+clean_counts_norm_df <- counts_norm_df |>
+  semi_join(clean_counts_raw_df, by = "gene_id")
+```
+
+### Export data
+
+```{r}
+write_tsv(x = clean_sample_meta, file = "../data/02_sample_meta_clean.tsv")
+write_tsv(x = clean_counts_norm_df, file = "../data/02_counts_norm_clean.tsv")
+```
+
+## Augment Data
+
+### Normalised Counts data
+
+The dataset was transformed from wide to long format using `pivot_longer()`. This structure facilitates the integration of the count data with the sample metadata and supports subsequent exploratory analysis and visualization.
+
+```{r}
+counts_norm_long <- clean_counts_norm_df |>
+  pivot_longer(
+    cols      = -gene_id,
+    names_to  = "sample_id",
+    values_to = "log2_counts")
+
+counts_norm_long |>
+  slice_sample(n=10)
+```
+
+### Creating one data set from two data sets
+
+The two datasets were merged using the sample_id column as a common identifier. The `inner_join()` was used to retain only the samples present in both datasets, ensuring that each gene count was associated with its corresponding sample information.
+
+```{r}
+merged_data <- counts_norm_long|>
+  inner_join(clean_sample_meta, by = "sample_id")
+
+merged_data |>
+  slice_sample(n = 10)
+```
+
+#### Consistency in sample_ids
+
+Some sample IDs carried a " \_2 " at the end of the sample id , which marked a replicate and made their format inconsistent with the rest. Now that the datasets are merged, we removed the suffix so all sample IDs follow the same format.
+
+```{r}
+merged_data <- merged_data |>
+  mutate(sample_id = str_remove(sample_id, "_2"))
+```
+
+Checked that each sample appears only once per gene
+
+```{r}
+merged_data |>
+  count(gene_id, sample_id) |>
+  filter(n > 1)
+```
+
+### Export Data
+
+```{r}
+write_tsv(x = merged_data, file = "../data/02_aug_data.tsv")
+```
+
+## Analysis of Data
+
+### Infected Cells
+
+To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with "naive" as the first level (set to be the reference).
+
+```{r}
+compare_infected <- merged_data |>
+  filter(SL1344_infection == "infected") |>
+  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
+```
+
+Selected the columns needed for the model and nested the data by gene_id.
+
+```{r}
+compare_infected_nested <- compare_infected |>
+  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+compare_infected_nested |>
+  slice_sample(n=10)
+```
+
+Fit a linear model for every gene. We use `mutate()` together with `map()`, which applies the same function to each element of data column. The function is `lm()` with the formula "log2_counts \~ IFNg_status".
+
+For each gene, the model estimates the mean expression in naive cells (the intercept) and the difference between primed and naive cells. Since the values are on a log2 scale, this difference is the log2 fold change.
+
+```{r}
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object = map(.x = data,
+                            .f = ~lm(formula = log2_counts ~ IFNg_status,
+                            data = .x)))
+```
+
+We used `tidy()` from broom library to convert each model into a table of estimates, p-values and confidence intervals.
+
+```{r}
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
+```
+
+Unnest the data
+
+```{r}
+estimates_infected <- compare_infected_nested |> 
+  unnest(model_object_tidy)
+```
+
+From the unnested results we kept only the relevant rows and the columns needed for further analysis.
+
+We do a multiple testing correction, ajusting the p.values using `p.adjust()`, which gives the q.value. Finally, we used `case_when()` to classify each gene in a new column: a gene is "up" if q.value \< 0.05 and the log2 fold change is above 1 (at least twofold higher in primed cells); "down" if q.value \< 0.05 and the log2 fold change is below -1 (at least twofold lower in primed cells), and "not significant" otherwise (q.value \>= 0.05) .
+
+```{r}
+estimates_infected <- estimates_infected |> 
+  filter(term == "IFNg_statusprimed") |> 
+  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
+  ungroup() |> 
+  mutate(q.value = p.adjust(p.value),
+         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
+                          q.value < 0.05 & estimate < -0.59 ~ "down",
+                          TRUE ~ "not significant"))
+```
+
+#### Visualise
+
+**Volcano Plot : Changes in gene expression in infected cells when primed with IFNg**
+
+We selected the ten genes with the largest absolute log2 fold change to label them on the plot.
+
+```{r}
+top_genes <- estimates_infected |>
+  slice_max(abs(estimate), n = 10) |>
+  pull(gene_id)
+```
+
+We added a column that holds the gene_id for the ten selected genes and an empty label for all others, so that only those ten are labelled on the plot.
+
+```{r}
+estimates_infected <- estimates_infected |>
+  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
+                           !(gene_id %in% top_genes) ~ "")) 
+```
+
+Plotted with ggplot.
+
+```{r}
+volcano_plot_infected <- estimates_infected |> 
+  ggplot(aes(x = estimate, 
+             y = -log10(p.value), 
+             color = sign,
+             label = top10)) +
+  
+  geom_point(alpha = 0.5, size = 1.2) +
+  
+   geom_text_repel(size = 2,
+                  max.overlaps = 10,
+                  nudge_x = -1.3, 
+                  direction = "y") +
+  
+  geom_hline(yintercept = 0) +
+  
+  scale_colour_manual(values = c("up" = "brown2",
+                                 "down" = "deepskyblue4",
+                                 "not significant" = "grey70")) +
+  
+  labs(x = "log2 fold change (primed vs naive)",
+       y = "-log10(p)",
+       title = "Effect of IFNγ priming on gene expression in SL1344 infected cells",
+       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
+       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
+  
+  theme_minimal() +
+  
+  theme(
+    legend.position = "none",
+    plot.title.position = "plot",
+    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
+    plot.subtitle = element_text(hjust = 0, size = 11),
+    axis.title = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+
+volcano_plot_infected
+```
+
+Seeing the number of genes that are down regulated and up regulated
+
+```{r}
+estimates_infected |>
+  count(sign)
+```
+
+### Control Cells
+
+Now, we do same pipeline we did for infected cells, but for the control samples, filtering only the rows corresponding to the control.
+
+```{r}
+compare_control <- merged_data |>
+  filter(SL1344_infection == "control") |>
+  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
+```
+
+```{r}
+compare_control_nested <- compare_control |>
+  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+compare_control_nested |>
+  slice_sample(n=10)
+```
+
+```{r}
+compare_control_nested <- compare_control_nested |> 
+  mutate(model_object = map(.x = data,
+                   .f = ~lm(formula = log2_counts ~ IFNg_status,
+                            data = .x)))
+```
+
+```{r}
+compare_control_nested <- compare_control_nested |> 
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
+```
+
+```{r}
+estimates_control <- compare_control_nested |> 
+  unnest(model_object_tidy)
+```
+
+```{r}
+estimates_control <- estimates_control |> 
+  filter(term == "IFNg_statusprimed") |> 
+  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
+  ungroup() |> 
+  mutate(q.value = p.adjust(p.value),
+         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
+                          q.value < 0.05 & estimate < -0.59 ~ "down",
+                          TRUE ~ "not significant"))
+```
+
+#### Visualise
+
+**Volcano Plot : Changes in gene expression in control cells when primed with IFNg**
+
+```{r}
+top_genes <- estimates_control |>
+  slice_max(abs(estimate), n = 10) |>
+  pull(gene_id)
+```
+
+```{r}
+estimates_control <- estimates_control |>
+  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
+                           !(gene_id %in% top_genes) ~ "")) 
+```
+
+Plotted with ggplot.
+
+```{r}
+volcano_plot_control <- estimates_control |> 
+  ggplot(aes(x = estimate, 
+             y = -log10(p.value), 
+             color = sign,
+             label = top10)) +
+  
+  geom_point(alpha = 0.5, size = 1.2) +
+  
+   geom_text_repel(size = 2,
+                  max.overlaps = 10) +
+  
+  geom_hline(yintercept = 0) +
+  
+  scale_colour_manual(values = c("up" = "brown2",
+                                 "down" = "deepskyblue4",
+                                 "not significant" = "grey70")) +
+  
+  labs(x = "log2 fold change (primed vs naive)",
+       y = "-log10(p)",
+       title = "Effect of IFNγ priming on gene expression in control cells",
+       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
+       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
+  
+  theme_minimal() +
+  
+  theme(
+    legend.position = "none",
+    plot.title.position = "plot",
+    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
+    plot.subtitle = element_text(hjust = 0, size = 11),
+    axis.title = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+
+volcano_plot_control
+```
+
+```{r}
+ggsave(
+  filename = "../results/05_key_plot_2.1.png",
+  plot     = volcano_plot_infected,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
+
+ggsave(
+  filename = "../results/05_key_plot_2.2.png",
+  plot     = volcano_plot_control,
+  width    = 8,
+  height   = 5,
+  dpi      = 300
+)
+```
