@@ -208,7 +208,9 @@ write_tsv(x = merged_data, file = "../data/02_aug_data.tsv")
 
 ## Analysis of Data
 
-### Infected Cells
+### Infected Cells 
+
+**Note:** This is the same pipeline used in *05_analysis_1.qmd*, but only for the **infected cells**.
 
 To be able to see the differences in gene expressions in infected cells, we kept only the infected samples. Within these samples, the two groups to compare are the naive and the primed cells. We then converted IFNg_status into a factor with "naive" as the first level (set to be the reference).
 
@@ -287,8 +289,6 @@ top_genes <- estimates_infected |>
   slice_min(q.value, n = n_genes) |>
   ungroup() |>
   select(gene_id, sign)
-
-
 ```
 
 Plotting using ggridges:
@@ -319,25 +319,15 @@ ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) 
 **Upregulated genes (right panel)**
 
 -   Expression is **low** in unprimed conditions. The medians being around -2 also confirm that these genes are barely expressed.
-
-<!-- -->
-
 -   The distribution shifts right in the primed conditions, especially for IFNg_SL1344, where the shift is of roughly 7 log2 units compared to the unprimed conditions.
-
 -   Comparing SL1344 and naive conditions, they look very similar. Thus, infection by itself does not turn these genes on, meaning the change is driven by IFNγ priming.
-
--   SL1344 alone looks almost the same as naive. The infection by itself does not turn these genes on, so the change is driven by IFNγ priming.
-
--   Nonetheless, IFNg_SL1344 is slightly higher than IFNg alone, which may mean that infection may add a "small boost" on top of priming. The IFNγ ridge also has a bump on the left that doesn't exist in IFNg_SL1344 , which may mean that a few genes respond more weakly without infection.
+-   SL1344 alone looks almost the same as naive. Infection by itself does not turn these genes on, so the change is driven by IFNγ priming.
+-   Nonetheless, IFNg_SL1344 is slightly higher than IFNg alone, which may mean that infection may add a "small boost" on top of priming. The IFNγ ridge also has a bump on the left that doesn't exist in IFNg_SL1344, which may mean that a few genes respond more weakly without infection.
 
 **Downregulated genes (left panel)**
 
 -   As expected, the shift goes in the opposite direction, albeit much smaller.
-
-<!-- -->
-
 -   The distributions overlap a lot, as these genes are moderately to highly expressed. This points to downregulation by IFNγ being weaker than upregulation.
-
 -   As with the upregulated genes, SL1344 alone is almost identical to naive, so priming is the main driver.
 
 **Conclusion**\

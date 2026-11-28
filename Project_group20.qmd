@@ -363,7 +363,106 @@ n_distinct(gene_summary$gene_id)
 
 ## Analysis Plots
 
+<<<<<<< HEAD
+### 1. Volcano Plot
+```{r}
+compare_infected <- merged_data |>
+  filter(SL1344_infection == "infected") |>
+  mutate(IFNg_status = factor(IFNg_status, levels = c("naive", "primed")))
+```
+
+```{r}
+compare_infected_nested <- compare_infected |>
+  select(c("gene_id","sample_id","log2_counts","IFNg_status")) |>
+  group_by(gene_id) |>
+  nest() |>
+  ungroup()
+
+compare_infected_nested |>
+  slice_sample(n=10)
+```
+
+```{r}
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object = map(.x = data,
+                            .f = ~lm(formula = log2_counts ~ IFNg_status,
+                            data = .x)))
+```
+
+```{r}
+compare_infected_nested <- compare_infected_nested |> 
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~ tidy(.x, conf.int = TRUE, conf.level = 0.95)))
+```
+
+```{r}
+estimates_infected <- compare_infected_nested |> 
+  unnest(model_object_tidy)
+```
+
+```{r}
+estimates_infected <- estimates_infected |> 
+  filter(term == "IFNg_statusprimed") |> 
+  select(gene_id, term, estimate, std.error, statistic, p.value, conf.low, conf.high) |> 
+  ungroup() |> 
+  mutate(q.value = p.adjust(p.value),
+         sign = case_when(q.value < 0.05 & estimate >  0.59 ~ "up",
+                          q.value < 0.05 & estimate < -0.59 ~ "down",
+                          TRUE ~ "not significant"))
+```
+
+```{r}
+top_genes <- estimates_infected |>
+  slice_max(abs(estimate), n = 10) |>
+  pull(gene_id)
+```
+
+```{r}
+estimates_infected <- estimates_infected |>
+  mutate(top10 = case_when(gene_id %in% top_genes ~ gene_id,
+                           !(gene_id %in% top_genes) ~ "")) 
+```
+
+```{r}
+estimates_infected |> 
+  ggplot(aes(x = estimate, 
+             y = -log10(p.value), 
+             color = sign,
+             label = top10)) +
+  
+  geom_point(alpha = 0.5, size = 1.2) +
+  
+   geom_text_repel(size = 2,
+                  max.overlaps = 10,
+                  nudge_x = -1.3, 
+                  direction = "y") +
+  
+  geom_hline(yintercept = 0) +
+  
+  scale_colour_manual(values = c("up" = "brown2",
+                                 "down" = "deepskyblue4",
+                                 "not significant" = "grey70")) +
+  
+  labs(x = "log2 fold change (primed vs naive)",
+       y = "-log10(p)",
+       title = "Effect of IFNγ priming on gene expression in SL1344 infected cells",
+       subtitle = "Red: higher expression in primed cells\nBlue: lower expression in primed cells\nGrey: no significant change",
+       caption ="Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7") +
+  
+  theme_minimal() +
+  
+  theme(
+    legend.position = "none",
+    plot.title.position = "plot",
+    plot.title = element_text(hjust = 0, size = 14, face = "plain"),
+    plot.subtitle = element_text(hjust = 0, size = 11),
+    axis.title = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+```
+=======
 ### 1. PCA Plot
+>>>>>>> 7d05d8c72234674dde45e96c64c4c3a58db3a75e
 
 At the start of the exploratory analysis, it is usual to perform a Principal Component Analysis (PCA) to evaluate global variation in the dataset and check whether samples separate according to their experimental conditions.
 
@@ -656,4 +755,39 @@ estimates_control |>
   count(sign)
 ```
 
-### 3.
+### 3. Ridge Plot
+
+```{r}
+n_genes <- 30
+
+top_genes <- estimates_infected |>
+  filter(sign %in% c("up", "down")) |>
+  group_by(sign) |>
+  slice_min(q.value, n = n_genes) |>
+  ungroup() |>
+  select(gene_id, sign)
+```
+
+```{r}
+plot_data <- merged_data |>
+  inner_join(top_genes, by = "gene_id") |>
+  mutate(
+    direction = factor(sign, levels = c("down", "up"),
+                       labels = c("Downregulated", "Upregulated")),
+    condition_name = factor(condition_name,
+                            levels = c("IFNg_SL1344", "IFNg", "SL1344", "naive"))
+  )
+
+ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) +
+  geom_density_ridges(alpha = 0.75, quantile_lines = TRUE, quantiles = 2) +
+  facet_wrap(~ direction) +
+  scale_fill_manual(values = c(naive = "#E8C547", primed = "#5B2A86"),
+                    name = NULL) +
+  labs(title = "Expression of top IFNγ-responsive genes across conditions",
+       subtitle = "Vertical lines in the ridges are the medians",
+       caption = "Data Source: Alasoo et al.(2018) DOI: 10.1038/s41588-018-0046-7",
+       x = expression(log[2]~"counts"), 
+       y = NULL) +
+  theme_minimal()
+```
+
