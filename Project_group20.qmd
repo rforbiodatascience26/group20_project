@@ -363,8 +363,8 @@ n_distinct(gene_summary$gene_id)
 
 ## Analysis Plots
 
-<<<<<<< HEAD
 ### 1. Volcano Plot
+
 ```{r}
 compare_infected <- merged_data |>
   filter(SL1344_infection == "infected") |>
@@ -460,9 +460,8 @@ estimates_infected |>
     panel.grid.minor = element_blank()
   )
 ```
-=======
-### 1. PCA Plot
->>>>>>> 7d05d8c72234674dde45e96c64c4c3a58db3a75e
+
+\### 1. PCA Plot
 
 At the start of the exploratory analysis, it is usual to perform a Principal Component Analysis (PCA) to evaluate global variation in the dataset and check whether samples separate according to their experimental conditions.
 
@@ -790,4 +789,3 @@ ggplot(plot_data, aes(x = log2_counts, y = condition_name, fill = IFNg_status)) 
        y = NULL) +
   theme_minimal()
 ```
-
